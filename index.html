@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>模考成績分析系統 | Mock Exam Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css?v=4">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="background-orbs">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+    </div>
+
+    <div class="app-container">
+        <!-- Sidebar / Navigation -->
+        <aside class="sidebar glass-panel">
+            <div class="brand">
+                <div class="logo"></div>
+                <h2>成績分析系統</h2>
+                <p>Mock Exam Analytics</p>
+            </div>
+
+            <nav class="nav-menu">
+                <button class="nav-btn active" data-view="dashboard">
+                    <span class="icon">📊</span> 班級總覽
+                </button>
+                <button class="nav-btn" data-view="student">
+                    <span class="icon">🧑‍🎓</span> 學生分佈
+                </button>
+                <button class="nav-btn" data-view="subject">
+                    <span class="icon">📈</span> 各科分佈
+                </button>
+            </nav>
+
+            <div class="filters">
+                <h3>資料篩選</h3>
+                <div class="filter-group">
+                    <label for="class-select">選擇班級</label>
+                    <select id="class-select">
+                        <option value="all">所有班級</option>
+                        <!-- Options populated by JS -->
+                    </select>
+                </div>
+                
+                <div id="student-filter" class="filter-group hidden">
+                    <label for="student-select">選擇學生</label>
+                    <select id="student-select">
+                        <option value="">請先選擇班級...</option>
+                        <!-- Options populated by JS -->
+                    </select>
+                </div>
+                
+                <div id="search-filter" class="filter-group hidden">
+                    <label for="student-search">搜尋姓名/座號</label>
+                    <input type="text" id="student-search" placeholder="例如: 王小明 或 05...">
+                </div>
+            </div>
+
+            <div class="loading-state" id="loading-indicator">
+                <div class="spinner"></div>
+                <p>載入資料中...</p>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Dashboard View -->
+            <section id="view-dashboard" class="view-section active">
+                <header class="section-header">
+                    <h1>班級整體表現總覽</h1>
+                    <p class="subtitle">比較各班級在各次模考中的平均總積分表現</p>
+                </header>
+
+                <div class="stats-grid">
+                    <div class="stat-card glass-panel">
+                        <h4 class="stat-title">總學生數</h4>
+                        <div class="stat-value" id="total-students">--</div>
+                    </div>
+                    <div class="stat-card glass-panel">
+                        <h4 class="stat-title">全校一模平均</h4>
+                        <div class="stat-value" id="avg-m1">--</div>
+                    </div>
+                    <div class="stat-card glass-panel">
+                        <h4 class="stat-title">全校二模平均</h4>
+                        <div class="stat-value" id="avg-m2">--</div>
+                    </div>
+                    <div class="stat-card glass-panel">
+                        <h4 class="stat-title">全校三模平均</h4>
+                        <div class="stat-value" id="avg-m3">--</div>
+                    </div>
+                </div>
+
+                <div class="charts-container">
+                    <div class="chart-wrapper glass-panel main-chart">
+                        <h3>各班級平均總積分比較</h3>
+                        <div class="canvas-container">
+                            <canvas id="classAvgChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Student View -->
+            <section id="view-student" class="view-section">
+                <header class="section-header">
+                    <h1>個人成績分析 <span id="student-name-display" class="highlight">請選擇學生</span></h1>
+                    <p class="subtitle" id="student-info-display">班級: -- | 座號: --</p>
+                </header>
+
+                <div class="student-dashboard placeholder-state" id="student-dashboard-content">
+                    <div class="placeholder-message">
+                        <div class="icon">🔍</div>
+                        <p>請從左側選單選擇或搜尋學生以查看詳細成績</p>
+                    </div>
+                </div>
+
+                <div class="student-dashboard active-state hidden" id="student-dashboard-active">
+                    <div class="charts-grid">
+                        <div class="chart-wrapper glass-panel">
+                            <h3>三次模考總積分變化</h3>
+                            <div class="canvas-container">
+                                <canvas id="progressChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="chart-wrapper glass-panel">
+                            <h3>最近一次模考各科雷達圖</h3>
+                            <div class="canvas-container">
+                                <canvas id="radarChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grades-breakdown glass-panel mt-4">
+                        <h3>各次模考詳細成績</h3>
+                        <div class="table-container">
+                            <table class="grades-table">
+                                <thead>
+                                    <tr>
+                                        <th>考試次別</th>
+                                        <th>總積分</th>
+                                        <th>國文</th>
+                                        <th>英文</th>
+                                        <th>數學</th>
+                                        <th>社會</th>
+                                        <th>自然</th>
+                                        <th>寫作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="grades-table-body">
+                                    <!-- Populated by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Subject Bar Chart View -->
+            <section id="view-subject" class="view-section">
+                <header class="section-header">
+                    <h1>各科等級人數分佈分析</h1>
+                    <p class="subtitle" id="subject-info-display">請選擇班級以查看各科詳細分佈</p>
+                </header>
+                
+                <div class="filters" style="margin-top: 0; margin-bottom: 8px;">
+                    <div class="filter-group" style="flex-direction: row; align-items: center; gap: 12px; max-width: 300px;">
+                        <label for="subject-filter" style="white-space: nowrap;">選擇分析科目：</label>
+                        <select id="subject-filter">
+                            <option value="國">國文</option>
+                            <option value="英">英文</option>
+                            <option value="數">數學</option>
+                            <option value="社">社會</option>
+                            <option value="自">自然</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="subject-dashboard-content" class="placeholder-state">
+                    <div class="placeholder-message">
+                        <div class="icon">📊</div>
+                        <h2>等待選擇分析目標...</h2>
+                        <p>請從左側選單選擇一個班級以檢視資料</p>
+                    </div>
+                </div>
+
+                <div id="subject-dashboard-active" class="hidden">
+                    <div class="chart-wrapper glass-panel">
+                        <h3 id="subject-chart-title">各科等級人數長條圖</h3>
+                        <div class="canvas-container">
+                            <canvas id="subjectBarChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="app.js?v=6"></script>
+</body>
+</html>
