@@ -299,7 +299,7 @@ select option {
 /* Dashboard Stats Grid */
 .stats-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(5, 1fr);
     gap: 20px;
 }
 
@@ -320,6 +320,7 @@ select option {
 .stat-card:nth-child(2) { border-top-color: var(--accent-1); }
 .stat-card:nth-child(3) { border-top-color: var(--accent-2); }
 .stat-card:nth-child(4) { border-top-color: var(--warning); }
+.stat-card:nth-child(5) { border-top-color: var(--success); }
 
 .stat-title {
     color: var(--text-muted);
@@ -428,6 +429,24 @@ select option {
 
 .grades-table td {
     font-weight: 500;
+}
+
+/* Cumulative Table Special Styling */
+.cumulative-table th[colspan="2"] {
+    border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.cumulative-table td:nth-child(even) {
+    background: rgba(59, 130, 246, 0.05);
+}
+
+.cumulative-table tr.highlight-row {
+    background: rgba(236, 72, 153, 0.05);
+}
+
+.cumulative-table tr.highlight-row td:first-child {
+    font-weight: 700;
+    color: var(--accent-2);
 }
 
 /* Utilities */

@@ -34,6 +34,9 @@
                 <button class="nav-btn" data-view="subject">
                     <span class="icon">📈</span> 各科分佈
                 </button>
+                <button class="nav-btn" data-view="cumulative">
+                    <span class="icon">📊</span> 累積人數
+                </button>
             </nav>
 
             <div class="filters">
@@ -92,6 +95,10 @@
                         <h4 class="stat-title">全校三模平均</h4>
                         <div class="stat-value" id="avg-m3">--</div>
                     </div>
+                    <div class="stat-card glass-panel">
+                        <h4 class="stat-title">全校四模平均</h4>
+                        <div class="stat-value" id="avg-m4">--</div>
+                    </div>
                 </div>
 
                 <div class="charts-container">
@@ -121,7 +128,7 @@
                 <div class="student-dashboard active-state hidden" id="student-dashboard-active">
                     <div class="charts-grid">
                         <div class="chart-wrapper glass-panel">
-                            <h3>三次模考總積分變化</h3>
+                            <h3>四次模考總積分變化</h3>
                             <div class="canvas-container">
                                 <canvas id="progressChart"></canvas>
                             </div>
@@ -192,6 +199,55 @@
                         <h3 id="subject-chart-title">各科等級人數長條圖</h3>
                         <div class="canvas-container">
                             <canvas id="subjectBarChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Cumulative Score Analysis View -->
+            <section id="view-cumulative" class="view-section">
+                <header class="section-header">
+                    <h1>累積人數分析 <span class="highlight">25分 / 30分 門檻</span></h1>
+                    <p class="subtitle">追蹤全校及各組別在關鍵積分門檻的人數達成狀況</p>
+                </header>
+
+                <div class="cumulative-container">
+                    <div class="charts-container">
+                        <div class="chart-wrapper glass-panel">
+                            <h3>各組別累積人數趨勢 (>= 25分 & >= 30分)</h3>
+                            <div class="canvas-container" style="height: 350px;">
+                                <canvas id="cumulativeChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grades-breakdown glass-panel mt-4">
+                        <h3>累積人數詳細對照表</h3>
+                        <div class="table-container">
+                            <table class="grades-table cumulative-table">
+                                <thead>
+                                    <tr>
+                                        <th rowspan="2">組別 \ 考試次別</th>
+                                        <th colspan="2">一模</th>
+                                        <th colspan="2">二模</th>
+                                        <th colspan="2">三模</th>
+                                        <th colspan="2">四模</th>
+                                    </tr>
+                                    <tr>
+                                        <th>>= 25分</th>
+                                        <th>>= 30分</th>
+                                        <th>>= 25分</th>
+                                        <th>>= 30分</th>
+                                        <th>>= 25分</th>
+                                        <th>>= 30分</th>
+                                        <th>>= 25分</th>
+                                        <th>>= 30分</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="cumulative-table-body">
+                                    <!-- Populated by JS -->
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>

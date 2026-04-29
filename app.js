@@ -11,7 +11,8 @@ const state = {
         classAvg: null,
         progress: null,
         radar: null,
-        subjectBar: null
+        subjectBar: null,
+        cumulative: null
     }
 };
 
@@ -36,6 +37,7 @@ const elements = {
     avgM1: document.getElementById('avg-m1'),
     avgM2: document.getElementById('avg-m2'),
     avgM3: document.getElementById('avg-m3'),
+    avgM4: document.getElementById('avg-m4'),
     
     // Student View Details
     studentNameDisplay: document.getElementById('student-name-display'),
@@ -50,7 +52,10 @@ const elements = {
     subjectNameDisplay: document.getElementById('subject-name-display'),
     subjectInfoDisplay: document.getElementById('subject-info-display'),
     subjectDashboardPlaceholder: document.getElementById('subject-dashboard-content'),
-    subjectDashboardActive: document.getElementById('subject-dashboard-active')
+    subjectDashboardActive: document.getElementById('subject-dashboard-active'),
+
+    // Cumulative Analysis Details
+    cumulativeTableBody: document.getElementById('cumulative-table-body')
 };
 
 // Chart Colors corresponding to CSS variables for consistency
@@ -61,6 +66,8 @@ const colors = {
     accent1Bg: 'rgba(139, 92, 246, 0.2)',
     accent2: 'rgba(236, 72, 153, 1)',   // Pink
     accent2Bg: 'rgba(236, 72, 153, 0.2)',
+    success: 'rgba(16, 185, 129, 1)',
+    successBg: 'rgba(16, 185, 129, 0.2)',
     text: '#0f172a', // Dark text for light theme
     grid: 'rgba(0, 0, 0, 0.1)' // Dark grid lines
 };
@@ -221,6 +228,11 @@ function setupEventListeners() {
             if (state.charts.radar) state.charts.radar.resize();
             if (state.charts.subjectBar) state.charts.subjectBar.resize();
             if (state.charts.classAvg) state.charts.classAvg.resize();
+            if (state.charts.cumulative) state.charts.cumulative.resize();
+
+            if (viewId === 'cumulative') {
+                renderCumulativeView();
+            }
         });
     });
 
@@ -304,21 +316,24 @@ function renderDashboardView() {
     let m1Sum = 0, m1Count = 0;
     let m2Sum = 0, m2Count = 0;
     let m3Sum = 0, m3Count = 0;
+    let m4Sum = 0, m4Count = 0;
 
     dataToProcess.forEach(s => {
         if (s.一模 && s.一模.總積分) { m1Sum += parseFloatSafe(s.一模.總積分) || 0; m1Count++; }
         if (s.二模 && s.二模.總積分) { m2Sum += parseFloatSafe(s.二模.總積分) || 0; m2Count++; }
         if (s.三模 && s.三模.總積分) { m3Sum += parseFloatSafe(s.三模.總積分) || 0; m3Count++; }
+        if (s.四模 && s.四模.總積分) { m4Sum += parseFloatSafe(s.四模.總積分) || 0; m4Count++; }
     });
 
     elements.totalStudents.textContent = totalCount;
     elements.avgM1.textContent = m1Count ? (m1Sum / m1Count).toFixed(1) : '--';
     elements.avgM2.textContent = m2Count ? (m2Sum / m2Count).toFixed(1) : '--';
     elements.avgM3.textContent = m3Count ? (m3Sum / m3Count).toFixed(1) : '--';
+    elements.avgM4.textContent = m4Count ? (m4Sum / m4Count).toFixed(1) : '--';
 
-    // Prepare Bar Chart Data (Class averages for all 3 mocks)
+    // Prepare Bar Chart Data (Class averages for all 4 mocks)
     const classStats = {};
-    state.classes.forEach(c => classStats[c] = { m1: {sum:0, count:0}, m2: {sum:0, count:0}, m3: {sum:0, count:0} });
+    state.classes.forEach(c => classStats[c] = { m1: {sum:0, count:0}, m2: {sum:0, count:0}, m3: {sum:0, count:0}, m4: {sum:0, count:0} });
 
     dataToProcess.forEach(s => {
         if (s.一模 && s.一模.總積分 && classStats[s.班級]) {
@@ -333,17 +348,22 @@ function renderDashboardView() {
             classStats[s.班級].m3.sum += parseFloatSafe(s.三模.總積分) || 0;
             classStats[s.班級].m3.count++;
         }
+        if (s.四模 && s.四模.總積分 && classStats[s.班級]) {
+            classStats[s.班級].m4.sum += parseFloatSafe(s.四模.總積分) || 0;
+            classStats[s.班級].m4.count++;
+        }
     });
 
     const chartLabels = state.classes.map(c => `${c}班`);
     const m1Data = state.classes.map(c => classStats[c].m1.count > 0 ? (classStats[c].m1.sum / classStats[c].m1.count).toFixed(1) : 0);
     const m2Data = state.classes.map(c => classStats[c].m2.count > 0 ? (classStats[c].m2.sum / classStats[c].m2.count).toFixed(1) : 0);
     const m3Data = state.classes.map(c => classStats[c].m3.count > 0 ? (classStats[c].m3.sum / classStats[c].m3.count).toFixed(1) : 0);
+    const m4Data = state.classes.map(c => classStats[c].m4.count > 0 ? (classStats[c].m4.sum / classStats[c].m4.count).toFixed(1) : 0);
 
-    renderClassAvgChart(chartLabels, m1Data, m2Data, m3Data);
+    renderClassAvgChart(chartLabels, m1Data, m2Data, m3Data, m4Data);
 }
 
-function renderClassAvgChart(labels, m1, m2, m3) {
+function renderClassAvgChart(labels, m1, m2, m3, m4) {
     const ctx = document.getElementById('classAvgChart').getContext('2d');
     
     if (state.charts.classAvg) {
@@ -376,6 +396,14 @@ function renderClassAvgChart(labels, m1, m2, m3) {
                     data: m3,
                     backgroundColor: colors.accent2Bg,
                     borderColor: colors.accent2,
+                    borderWidth: 1,
+                    borderRadius: 4
+                },
+                {
+                    label: '四模',
+                    data: m4,
+                    backgroundColor: colors.successBg,
+                    borderColor: colors.success,
                     borderWidth: 1,
                     borderRadius: 4
                 }
@@ -446,19 +474,25 @@ function renderStudentView() {
     const m1 = student.一模 || {};
     const m2 = student.二模 || {};
     const m3 = student.三模 || {};
+    const m4 = student.四模 || {};
 
     // 1. Progress Chart (Line)
     const progressData = [
         parseFloatSafe(m1.總積分) || null,
         parseFloatSafe(m2.總積分) || null,
-        parseFloatSafe(m3.總積分) || null
+        parseFloatSafe(m3.總積分) || null,
+        parseFloatSafe(m4.總積分) || null
     ];
-    renderProgressChart(['一模', '二模', '三模'], progressData);
+    renderProgressChart(['一模', '二模', '三模', '四模'], progressData);
 
     // 2. Radar Chart (Latest Exam)
     // Finding latest exam with data
-    let latestExam = m3;
-    let examLabel = '三模';
+    let latestExam = m4;
+    let examLabel = '四模';
+    if (!latestExam.國) {
+        latestExam = m3;
+        examLabel = '三模';
+    }
     if (!latestExam.國) {
         latestExam = m2;
         examLabel = '二模';
@@ -478,7 +512,7 @@ function renderStudentView() {
     renderRadarChart(['國文', '英文', '數學', '社會', '自然'], radarData, `各科能力狀態 (${examLabel})`);
 
     // 3. Populate Table
-    populateGradesTable(m1, m2, m3);
+    populateGradesTable(m1, m2, m3, m4);
 }
 
 function renderProgressChart(labels, data) {
@@ -616,7 +650,7 @@ function renderSubjectBarChart(className) {
     
     const displayClassName = className === 'all' ? '所有班級 (全校)' : `${className} 班`;
     if(elements.subjectInfoDisplay) elements.subjectInfoDisplay.textContent = `目前檢視：${displayClassName} | ${subjectName}科 等級人數分佈`;
-    if(elements.subjectChartTitle) elements.subjectChartTitle.textContent = `${displayClassName} ${subjectName}科 三次模考比較`;
+    if(elements.subjectChartTitle) elements.subjectChartTitle.textContent = `${displayClassName} ${subjectName}科 四次模考比較`;
 
     // Filter students
     const students = className === 'all' ? state.allData : state.allData.filter(s => s.班級 === className);
@@ -640,6 +674,7 @@ function renderSubjectBarChart(className) {
     const m1Counts = countGrades('一模');
     const m2Counts = countGrades('二模');
     const m3Counts = countGrades('三模');
+    const m4Counts = countGrades('四模');
 
     const ctx = document.getElementById('subjectBarChart').getContext('2d');
     if (state.charts.subjectBar) {
@@ -672,6 +707,14 @@ function renderSubjectBarChart(className) {
                     data: m3Counts,
                     backgroundColor: colors.accent2Bg,
                     borderColor: colors.accent2,
+                    borderWidth: 1,
+                    borderRadius: 4
+                },
+                {
+                    label: '四模',
+                    data: m4Counts,
+                    backgroundColor: colors.successBg,
+                    borderColor: colors.success,
                     borderWidth: 1,
                     borderRadius: 4
                 }
@@ -732,12 +775,134 @@ function processTableRow(examName, examData) {
     `;
 }
 
-function populateGradesTable(m1, m2, m3) {
+function populateGradesTable(m1, m2, m3, m4) {
     let html = '';
     html += processTableRow('一模', m1);
     html += processTableRow('二模', m2);
     html += processTableRow('三模', m3);
+    html += processTableRow('四模', m4);
     elements.gradesTableBody.innerHTML = html;
+}
+
+// --- Cumulative View Rendering ---
+
+function renderCumulativeView() {
+    const mocks = ['一模', '二模', '三模', '四模'];
+    const groupDefinitions = [
+        { label: '全校', filter: () => true },
+        { label: '直升班', filter: (s) => s.組別 === '直升班' },
+        { label: '會考組', filter: (s) => s.組別 === '會考組' }
+    ];
+
+    const results = groupDefinitions.map(group => {
+        const groupStudents = state.allData.filter(group.filter);
+        const stats = mocks.map(mock => {
+            const count25 = groupStudents.filter(s => s[mock] && parseFloatSafe(s[mock].總積分) >= 25).length;
+            const count30 = groupStudents.filter(s => s[mock] && parseFloatSafe(s[mock].總積分) >= 30).length;
+            return { count25, count30 };
+        });
+        return { label: group.label, stats };
+    });
+
+    // Populate Table
+    let tableHtml = '';
+    results.forEach(res => {
+        tableHtml += `
+            <tr>
+                <td style="font-weight: 600;">${res.label}</td>
+                <td>${res.stats[0].count25}</td>
+                <td style="font-weight: bold; color: var(--primary);">${res.stats[0].count30}</td>
+                <td>${res.stats[1].count25}</td>
+                <td style="font-weight: bold; color: var(--primary);">${res.stats[1].count30}</td>
+                <td>${res.stats[2].count25}</td>
+                <td style="font-weight: bold; color: var(--primary);">${res.stats[2].count30}</td>
+                <td>${res.stats[3].count25}</td>
+                <td style="font-weight: bold; color: var(--primary);">${res.stats[3].count30}</td>
+            </tr>
+        `;
+    });
+    elements.cumulativeTableBody.innerHTML = tableHtml;
+
+    // Render Chart
+    renderCumulativeChart(results);
+}
+
+function renderCumulativeChart(results) {
+    const ctx = document.getElementById('cumulativeChart').getContext('2d');
+    if (state.charts.cumulative) {
+        state.charts.cumulative.destroy();
+    }
+
+    const mocks = ['一模', '二模', '三模', '四模'];
+    
+    // We want to show 25+ and 30+ for each group
+    // Let's create datasets: [全校 25+, 全校 30+, 直升 25+, ...]
+    const datasets = [];
+    const groupColors = [
+        { main: 'rgba(59, 130, 246, 1)', light: 'rgba(59, 130, 246, 0.4)' }, // Blue
+        { main: 'rgba(139, 92, 246, 1)', light: 'rgba(139, 92, 246, 0.4)' }, // Purple
+        { main: 'rgba(236, 72, 153, 1)', light: 'rgba(236, 72, 153, 0.4)' }  // Pink
+    ];
+
+    results.forEach((res, idx) => {
+        datasets.push({
+            label: `${res.label} (>= 25分)`,
+            data: res.stats.map(s => s.count25),
+            backgroundColor: groupColors[idx].light,
+            borderColor: groupColors[idx].main,
+            borderWidth: 1,
+            borderRadius: 4,
+            stack: `stack${idx}`
+        });
+        datasets.push({
+            label: `${res.label} (>= 30分)`,
+            data: res.stats.map(s => s.count30),
+            backgroundColor: groupColors[idx].main,
+            borderColor: groupColors[idx].main,
+            borderWidth: 1,
+            borderRadius: 4,
+            stack: `stack${idx}`
+        });
+    });
+
+    state.charts.cumulative = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: mocks,
+            datasets: datasets
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                mode: 'index',
+                intersect: false
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: { display: true, text: '累積人數' },
+                    grid: { color: colors.grid }
+                },
+                x: {
+                    grid: { display: false }
+                }
+            },
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: { boxWidth: 12, padding: 15 }
+                },
+                tooltip: {
+                    callbacks: {
+                        footer: (tooltipItems) => {
+                            return '點擊可切換顯示特定組別';
+                        }
+                    }
+                }
+            }
+        }
+    });
 }
 
 // Bootstrap
