@@ -180,9 +180,10 @@ body {
 
 .filters {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
     gap: 16px;
-    margin-top: auto;
 }
 
 .filters h3 {
@@ -190,22 +191,25 @@ body {
     color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 1px;
-    margin-bottom: 8px;
+    margin-bottom: 0;
 }
 
 .filter-group {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
+    align-items: center;
     gap: 8px;
 }
 
 .filter-group label {
     font-size: 0.875rem;
     font-weight: 500;
+    white-space: nowrap;
 }
 
 select, input {
-    width: 100%;
+    width: auto;
+    min-width: 120px;
     padding: 10px 12px;
     border-radius: var(--radius-md);
     background: rgba(0, 0, 0, 0.2);

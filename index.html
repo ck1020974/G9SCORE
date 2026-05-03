@@ -1,13 +1,17 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>模考成績分析系統 | Mock Exam Dashboard</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+TC:wght@400;500;700;900&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="style.css?v=4">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
+
 <body>
     <div class="background-orbs">
         <div class="orb orb-1"></div>
@@ -29,7 +33,7 @@
                     <span class="icon">📊</span> 班級總覽
                 </button>
                 <button class="nav-btn" data-view="student">
-                    <span class="icon">🧑‍🎓</span> 學生分佈
+                    <span class="icon">🧑‍🎓</span> 個人表現
                 </button>
                 <button class="nav-btn" data-view="subject">
                     <span class="icon">📈</span> 各科分佈
@@ -39,29 +43,7 @@
                 </button>
             </nav>
 
-            <div class="filters">
-                <h3>資料篩選</h3>
-                <div class="filter-group">
-                    <label for="class-select">選擇班級</label>
-                    <select id="class-select">
-                        <option value="all">所有班級</option>
-                        <!-- Options populated by JS -->
-                    </select>
-                </div>
-                
-                <div id="student-filter" class="filter-group hidden">
-                    <label for="student-select">選擇學生</label>
-                    <select id="student-select">
-                        <option value="">請先選擇班級...</option>
-                        <!-- Options populated by JS -->
-                    </select>
-                </div>
-                
-                <div id="search-filter" class="filter-group hidden">
-                    <label for="student-search">搜尋姓名/座號</label>
-                    <input type="text" id="student-search" placeholder="例如: 王小明 或 05...">
-                </div>
-            </div>
+
 
             <div class="loading-state" id="loading-indicator">
                 <div class="spinner"></div>
@@ -74,8 +56,7 @@
             <!-- Dashboard View -->
             <section id="view-dashboard" class="view-section active">
                 <header class="section-header">
-                    <h1>班級整體表現總覽</h1>
-                    <p class="subtitle">比較各班級在各次模考中的平均總積分表現</p>
+                    <h1>班級成績分析</h1>
                 </header>
 
                 <div class="stats-grid">
@@ -113,10 +94,43 @@
 
             <!-- Student View -->
             <section id="view-student" class="view-section">
-                <header class="section-header">
-                    <h1>個人成績分析 <span id="student-name-display" class="highlight">請選擇學生</span></h1>
-                    <p class="subtitle" id="student-info-display">班級: -- | 座號: --</p>
+                <header class="section-header"
+                    style="display: flex; align-items: baseline; gap: 16px; margin-bottom: 8px; flex-wrap: wrap;">
+                    <h1 style="margin-bottom: 0; display: flex; align-items: baseline; gap: 16px;">
+                        個人表現分析
+                        <span id="student-info-display"
+                            style="font-size: 1.15rem; color: var(--text-muted); font-weight: 500;">班級: -- | 座號:
+                            --</span>
+                        <span id="student-name-display" class="highlight">請選擇學生</span>
+                    </h1>
                 </header>
+
+                <div class="filters">
+                    <div class="filter-group">
+                        <label for="student-group-select">選擇分組:</label>
+                        <select id="student-group-select">
+                            <option value="all">全校</option>
+                            <option value="直升班">直升班</option>
+                            <option value="會考組">會考組</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="student-class-select">選擇班級:</label>
+                        <select id="student-class-select">
+                            <option value="all">所有班級</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="student-select">選擇學生:</label>
+                        <select id="student-select">
+                            <option value="">請先選擇班級...</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="student-search">搜尋:</label>
+                        <input type="text" id="student-search" placeholder="姓名/座號">
+                    </div>
+                </div>
 
                 <div class="student-dashboard placeholder-state" id="student-dashboard-content">
                     <div class="placeholder-message">
@@ -126,22 +140,7 @@
                 </div>
 
                 <div class="student-dashboard active-state hidden" id="student-dashboard-active">
-                    <div class="charts-grid">
-                        <div class="chart-wrapper glass-panel">
-                            <h3>四次模考總積分變化</h3>
-                            <div class="canvas-container">
-                                <canvas id="progressChart"></canvas>
-                            </div>
-                        </div>
-                        <div class="chart-wrapper glass-panel">
-                            <h3>最近一次模考各科雷達圖</h3>
-                            <div class="canvas-container">
-                                <canvas id="radarChart"></canvas>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="grades-breakdown glass-panel mt-4">
+                    <div class="grades-breakdown glass-panel mb-4" style="margin-bottom: 1.5rem;">
                         <h3>各次模考詳細成績</h3>
                         <div class="table-container">
                             <table class="grades-table">
@@ -163,19 +162,48 @@
                             </table>
                         </div>
                     </div>
+
+                    <div class="charts-grid">
+                        <div class="chart-wrapper glass-panel">
+                            <h3>四次模考總積分變化</h3>
+                            <div class="canvas-container" style="height: 250px;">
+                                <canvas id="progressChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="chart-wrapper glass-panel">
+                            <h3>最近一次模考各科雷達圖</h3>
+                            <div class="canvas-container" style="height: 250px;">
+                                <canvas id="radarChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </section>
 
             <!-- Subject Bar Chart View -->
             <section id="view-subject" class="view-section">
                 <header class="section-header">
-                    <h1>各科等級人數分佈分析</h1>
+                    <h1>各科表現分析</h1>
                     <p class="subtitle" id="subject-info-display">請選擇班級以查看各科詳細分佈</p>
                 </header>
-                
-                <div class="filters" style="margin-top: 0; margin-bottom: 8px;">
-                    <div class="filter-group" style="flex-direction: row; align-items: center; gap: 12px; max-width: 300px;">
-                        <label for="subject-filter" style="white-space: nowrap;">選擇分析科目：</label>
+
+                <div class="filters">
+                    <div class="filter-group">
+                        <label for="subject-group-select">選擇分組：</label>
+                        <select id="subject-group-select">
+                            <option value="all">全校</option>
+                            <option value="直升班">直升班</option>
+                            <option value="會考組">會考組</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="subject-class-select">選擇班級：</label>
+                        <select id="subject-class-select">
+                            <option value="all">所有班級</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="subject-filter">選擇科目：</label>
                         <select id="subject-filter">
                             <option value="國">國文</option>
                             <option value="英">英文</option>
@@ -207,54 +235,81 @@
             <!-- Cumulative Score Analysis View -->
             <section id="view-cumulative" class="view-section">
                 <header class="section-header">
-                    <h1>累積人數分析 <span class="highlight">25分 / 30分 門檻</span></h1>
-                    <p class="subtitle">追蹤全校及各組別在關鍵積分門檻的人數達成狀況</p>
+                    <h1>累積人數分析</h1>
                 </header>
 
                 <div class="cumulative-container">
-                    <div class="charts-container">
-                        <div class="chart-wrapper glass-panel">
-                            <h3>各組別累積人數趨勢 (>= 25分 & >= 30分)</h3>
-                            <div class="canvas-container" style="height: 350px;">
-                                <canvas id="cumulativeChart"></canvas>
+                    <div
+                        style="display: flex; flex-wrap: wrap; justify-content: flex-start; align-items: center; gap: 32px; margin-bottom: 15px;">
+                        <div class="filters">
+                            <div class="filter-group">
+                                <label for="cumulative-group-select">選擇分組：</label>
+                                <select id="cumulative-group-select">
+                                    <option value="all">全校</option>
+                                    <option value="直升班">直升班</option>
+                                    <option value="會考組">會考組</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label for="cumulative-class-select">選擇班級：</label>
+                                <select id="cumulative-class-select">
+                                    <option value="all">所有班級</option>
+                                </select>
+                            </div>
+                        </div>
+                        <!-- Unified Legend -->
+                        <div class="custom-legend glass-panel"
+                            style="display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; padding: 10px;">
+                            <div style="display: flex; align-items: center; gap: 6px;"><span
+                                    style="display: inline-block; width: 12px; height: 12px; background: rgba(59, 130, 246, 1); border-radius: 50%;"></span>30分以上
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 6px;"><span
+                                    style="display: inline-block; width: 12px; height: 12px; background: rgba(16, 185, 129, 1); border-radius: 50%;"></span>25-29分
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 6px;"><span
+                                    style="display: inline-block; width: 12px; height: 12px; background: rgba(203, 213, 225, 1); border-radius: 50%;"></span>10-24分
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 6px;"><span
+                                    style="display: inline-block; width: 12px; height: 12px; background: rgba(239, 68, 68, 1); border-radius: 50%;"></span>10分以下
                             </div>
                         </div>
                     </div>
 
-                    <div class="grades-breakdown glass-panel mt-4">
-                        <h3>累積人數詳細對照表</h3>
-                        <div class="table-container">
-                            <table class="grades-table cumulative-table">
-                                <thead>
-                                    <tr>
-                                        <th rowspan="2">組別 \ 考試次別</th>
-                                        <th colspan="2">一模</th>
-                                        <th colspan="2">二模</th>
-                                        <th colspan="2">三模</th>
-                                        <th colspan="2">四模</th>
-                                    </tr>
-                                    <tr>
-                                        <th>>= 25分</th>
-                                        <th>>= 30分</th>
-                                        <th>>= 25分</th>
-                                        <th>>= 30分</th>
-                                        <th>>= 25分</th>
-                                        <th>>= 30分</th>
-                                        <th>>= 25分</th>
-                                        <th>>= 30分</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="cumulative-table-body">
-                                    <!-- Populated by JS -->
-                                </tbody>
-                            </table>
+                    <div class="charts-container"
+                        style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;">
+                        <div class="chart-wrapper glass-panel" style="padding: 12px; gap: 4px;">
+                            <h3 style="font-size: 1rem; margin-bottom: 4px;">一模</h3>
+                            <div class="canvas-container" style="height: 180px;">
+                                <canvas id="pieChartM1"></canvas>
+                            </div>
+                        </div>
+                        <div class="chart-wrapper glass-panel" style="padding: 12px; gap: 4px;">
+                            <h3 style="font-size: 1rem; margin-bottom: 4px;">二模</h3>
+                            <div class="canvas-container" style="height: 180px;">
+                                <canvas id="pieChartM2"></canvas>
+                            </div>
+                        </div>
+                        <div class="chart-wrapper glass-panel" style="padding: 12px; gap: 4px;">
+                            <h3 style="font-size: 1rem; margin-bottom: 4px;">三模</h3>
+                            <div class="canvas-container" style="height: 180px;">
+                                <canvas id="pieChartM3"></canvas>
+                            </div>
+                        </div>
+                        <div class="chart-wrapper glass-panel" style="padding: 12px; gap: 4px;">
+                            <h3 style="font-size: 1rem; margin-bottom: 4px;">四模</h3>
+                            <div class="canvas-container" style="height: 180px;">
+                                <canvas id="pieChartM4"></canvas>
+                            </div>
                         </div>
                     </div>
+
                 </div>
-            </section>
-        </main>
+    </div>
+    </section>
+    </main>
     </div>
 
     <script src="app.js?v=6"></script>
 </body>
+
 </html>

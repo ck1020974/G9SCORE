@@ -5,14 +5,18 @@ const state = {
     currentView: 'dashboard', // 'dashboard' or 'student'
     filters: {
         className: 'all',
-        studentSeat: null
+        studentSeat: null,
+        group: 'all'
     },
     charts: {
         classAvg: null,
         progress: null,
         radar: null,
         subjectBar: null,
-        cumulative: null
+        pieM1: null,
+        pieM2: null,
+        pieM3: null,
+        pieM4: null
     }
 };
 
@@ -22,12 +26,15 @@ const elements = {
     navBtns: document.querySelectorAll('.nav-btn'),
     views: document.querySelectorAll('.view-section'),
     
-    // Filters
-    classSelect: document.getElementById('class-select'),
-    studentFilterGroup: document.getElementById('student-filter'),
+    // Filters (Moved to respective views)
+    studentGroupSelect: document.getElementById('student-group-select'),
+    studentClassSelect: document.getElementById('student-class-select'),
     studentSelect: document.getElementById('student-select'),
-    searchFilterGroup: document.getElementById('search-filter'),
     studentSearch: document.getElementById('student-search'),
+    subjectClassSelect: document.getElementById('subject-class-select'),
+    subjectGroupSelect: document.getElementById('subject-group-select'),
+    cumulativeGroupSelect: document.getElementById('cumulative-group-select'),
+    cumulativeClassSelect: document.getElementById('cumulative-class-select'),
     
     // Loading State
     loadingIndicator: document.getElementById('loading-indicator'),
@@ -160,24 +167,39 @@ function getGradeClass(grade) {
 // --- UI Updates ---
 
 function populateClassSelect() {
-    // Keep the "all" option, append others
-    elements.classSelect.innerHTML = '<option value="all">所有班級</option>';
-    state.classes.forEach(cls => {
-        const option = document.createElement('option');
-        option.value = cls;
-        option.textContent = cls + ' 班';
-        elements.classSelect.appendChild(option);
-    });
+    let classes = state.classes;
+    if (state.filters.group !== 'all') {
+        const classesInGroup = new Set(state.allData.filter(s => s.組別 === state.filters.group).map(s => s.班級));
+        classes = Array.from(classesInGroup).sort();
+    }
+
+    const optionsHTML = '<option value="all">所有班級</option>' + 
+        classes.map(c => `<option value="${c}">${c} 班</option>`).join('');
+    
+    if(elements.studentClassSelect) elements.studentClassSelect.innerHTML = optionsHTML;
+    if(elements.subjectClassSelect) elements.subjectClassSelect.innerHTML = optionsHTML;
+    if(elements.cumulativeClassSelect) elements.cumulativeClassSelect.innerHTML = optionsHTML;
 }
 
 function populateStudentSelect(className) {
-    elements.studentSelect.innerHTML = '<option value="">請選擇學生...</option>';
+    if (!elements.studentSelect) return;
     
-    if (className === 'all') return;
+    let students = state.allData;
+    if (state.filters.group !== 'all') {
+        students = students.filter(s => s.組別 === state.filters.group);
+    }
 
-    const filteredStudents = state.allData.filter(s => s.班級 === className)
+    if (className === 'all') {
+        elements.studentSelect.innerHTML = '<option value="">請先選擇班級...</option>';
+        elements.studentSelect.disabled = true;
+        return;
+    }
+
+    elements.studentSelect.disabled = false;
+    const filteredStudents = students.filter(s => s.班級 === className)
         .sort((a, b) => parseInt(a.座號) - parseInt(b.座號));
 
+    elements.studentSelect.innerHTML = '<option value="">請選擇學生...</option>';
     filteredStudents.forEach(student => {
         const option = document.createElement('option');
         option.value = student.座號;
@@ -203,21 +225,10 @@ function setupEventListeners() {
             elements.views.forEach(v => v.classList.remove('active'));
             document.getElementById(`view-${viewId}`).classList.add('active');
             
-            // Toggle filter visibility
-            if (viewId === 'dashboard') {
-                elements.studentFilterGroup.classList.add('hidden');
-                elements.searchFilterGroup.classList.add('hidden');
-            } else if (viewId === 'subject') {
-                elements.studentFilterGroup.classList.add('hidden');
-                elements.searchFilterGroup.classList.add('hidden');
-                
-                // Auto render subject distributions for selected class (or 'all')
+            // Auto render specific logic per view
+            if (viewId === 'subject') {
                 renderSubjectBarChart(state.filters.className);
-            } else {
-                elements.studentFilterGroup.classList.remove('hidden');
-                elements.searchFilterGroup.classList.remove('hidden');
-                
-                // Auto render student view if already selected
+            } else if (viewId === 'student') {
                 if (state.filters.studentSeat) {
                     renderStudentView();
                 }
@@ -228,7 +239,9 @@ function setupEventListeners() {
             if (state.charts.radar) state.charts.radar.resize();
             if (state.charts.subjectBar) state.charts.subjectBar.resize();
             if (state.charts.classAvg) state.charts.classAvg.resize();
-            if (state.charts.cumulative) state.charts.cumulative.resize();
+            ['M1', 'M2', 'M3', 'M4'].forEach(m => {
+                if(state.charts[`pie${m}`]) state.charts[`pie${m}`].resize();
+            });
 
             if (viewId === 'cumulative') {
                 renderCumulativeView();
@@ -236,20 +249,77 @@ function setupEventListeners() {
         });
     });
 
-    // Class selection change
-    elements.classSelect.addEventListener('change', (e) => {
-        state.filters.className = e.target.value;
-        
-        if (state.currentView === 'dashboard') {
-            renderDashboardView();
-        } else if (state.currentView === 'subject') {
-            populateStudentSelect(state.filters.className);
-            renderSubjectBarChart(state.filters.className);
-        } else {
+    // Student Group selection change
+    if(elements.studentGroupSelect) {
+        elements.studentGroupSelect.addEventListener('change', (e) => {
+            state.filters.group = e.target.value;
+            // update class dropdowns based on group
+            populateClassSelect();
+            state.filters.className = 'all';
+            elements.studentClassSelect.value = 'all';
+            if(elements.subjectClassSelect) elements.subjectClassSelect.value = 'all';
+            if(elements.cumulativeClassSelect) elements.cumulativeClassSelect.value = 'all';
+            populateStudentSelect('all');
+            resetStudentView();
+        });
+    }
+
+    // Student Class selection change
+    if(elements.studentClassSelect) {
+        elements.studentClassSelect.addEventListener('change', (e) => {
+            state.filters.className = e.target.value;
+            if(elements.subjectClassSelect) elements.subjectClassSelect.value = state.filters.className;
+            if(elements.cumulativeClassSelect) elements.cumulativeClassSelect.value = state.filters.className;
             populateStudentSelect(state.filters.className);
             resetStudentView();
-        }
-    });
+        });
+    }
+
+    // Subject Class selection change
+    if(elements.subjectClassSelect) {
+        elements.subjectClassSelect.addEventListener('change', (e) => {
+            state.filters.className = e.target.value;
+            if(elements.studentClassSelect) elements.studentClassSelect.value = state.filters.className;
+            if(elements.cumulativeClassSelect) elements.cumulativeClassSelect.value = state.filters.className;
+            renderSubjectBarChart(state.filters.className);
+        });
+    }
+
+    // Subject Group selection change
+    if(elements.subjectGroupSelect) {
+        elements.subjectGroupSelect.addEventListener('change', (e) => {
+            state.filters.group = e.target.value;
+            populateClassSelect();
+            state.filters.className = 'all';
+            elements.subjectClassSelect.value = 'all';
+            if(elements.studentClassSelect) elements.studentClassSelect.value = 'all';
+            if(elements.cumulativeClassSelect) elements.cumulativeClassSelect.value = 'all';
+            renderSubjectBarChart(state.filters.className);
+        });
+    }
+
+    // Cumulative Group selection change
+    if(elements.cumulativeGroupSelect) {
+        elements.cumulativeGroupSelect.addEventListener('change', (e) => {
+            state.filters.group = e.target.value;
+            populateClassSelect();
+            state.filters.className = 'all';
+            if(elements.cumulativeClassSelect) elements.cumulativeClassSelect.value = 'all';
+            if(elements.studentClassSelect) elements.studentClassSelect.value = 'all';
+            if(elements.subjectClassSelect) elements.subjectClassSelect.value = 'all';
+            renderCumulativeView();
+        });
+    }
+
+    // Cumulative Class selection change
+    if(elements.cumulativeClassSelect) {
+        elements.cumulativeClassSelect.addEventListener('change', (e) => {
+            state.filters.className = e.target.value;
+            if(elements.studentClassSelect) elements.studentClassSelect.value = state.filters.className;
+            if(elements.subjectClassSelect) elements.subjectClassSelect.value = state.filters.className;
+            renderCumulativeView();
+        });
+    }
 
     // Subject selection change (For the Distribution view)
     if (elements.subjectFilter) {
@@ -288,8 +358,9 @@ function setupEventListeners() {
 
         if (student) {
             // Auto update filters to match found student
-            if (elements.classSelect.value !== student.班級) {
-                elements.classSelect.value = student.班級;
+            if (elements.studentClassSelect && elements.studentClassSelect.value !== student.班級) {
+                elements.studentClassSelect.value = student.班級;
+                if(elements.subjectClassSelect) elements.subjectClassSelect.value = student.班級;
                 state.filters.className = student.班級;
                 populateStudentSelect(student.班級);
             }
@@ -649,11 +720,17 @@ function renderSubjectBarChart(className) {
     const subjectKey = elements.subjectFilter.value; // e.g., '國', '英'
     
     const displayClassName = className === 'all' ? '所有班級 (全校)' : `${className} 班`;
-    if(elements.subjectInfoDisplay) elements.subjectInfoDisplay.textContent = `目前檢視：${displayClassName} | ${subjectName}科 等級人數分佈`;
+    if(elements.subjectInfoDisplay) elements.subjectInfoDisplay.textContent = ``;
     if(elements.subjectChartTitle) elements.subjectChartTitle.textContent = `${displayClassName} ${subjectName}科 四次模考比較`;
 
     // Filter students
-    const students = className === 'all' ? state.allData : state.allData.filter(s => s.班級 === className);
+    let students = state.allData;
+    if (state.filters.group !== 'all') {
+        students = students.filter(s => s.組別 === state.filters.group);
+    }
+    if (className !== 'all') {
+        students = students.filter(s => s.班級 === className);
+    }
 
     const gradesOrder = ['A++', 'A+', 'A', 'B++', 'B+', 'B', 'C'];
     
@@ -787,121 +864,87 @@ function populateGradesTable(m1, m2, m3, m4) {
 // --- Cumulative View Rendering ---
 
 function renderCumulativeView() {
-    const mocks = ['一模', '二模', '三模', '四模'];
-    const groupDefinitions = [
-        { label: '全校', filter: () => true },
-        { label: '直升班', filter: (s) => s.組別 === '直升班' },
-        { label: '會考組', filter: (s) => s.組別 === '會考組' }
-    ];
-
-    const results = groupDefinitions.map(group => {
-        const groupStudents = state.allData.filter(group.filter);
-        const stats = mocks.map(mock => {
-            const count25 = groupStudents.filter(s => s[mock] && parseFloatSafe(s[mock].總積分) >= 25).length;
-            const count30 = groupStudents.filter(s => s[mock] && parseFloatSafe(s[mock].總積分) >= 30).length;
-            return { count25, count30 };
-        });
-        return { label: group.label, stats };
-    });
-
-    // Populate Table
-    let tableHtml = '';
-    results.forEach(res => {
-        tableHtml += `
-            <tr>
-                <td style="font-weight: 600;">${res.label}</td>
-                <td>${res.stats[0].count25}</td>
-                <td style="font-weight: bold; color: var(--primary);">${res.stats[0].count30}</td>
-                <td>${res.stats[1].count25}</td>
-                <td style="font-weight: bold; color: var(--primary);">${res.stats[1].count30}</td>
-                <td>${res.stats[2].count25}</td>
-                <td style="font-weight: bold; color: var(--primary);">${res.stats[2].count30}</td>
-                <td>${res.stats[3].count25}</td>
-                <td style="font-weight: bold; color: var(--primary);">${res.stats[3].count30}</td>
-            </tr>
-        `;
-    });
-    elements.cumulativeTableBody.innerHTML = tableHtml;
-
-    // Render Chart
-    renderCumulativeChart(results);
-}
-
-function renderCumulativeChart(results) {
-    const ctx = document.getElementById('cumulativeChart').getContext('2d');
-    if (state.charts.cumulative) {
-        state.charts.cumulative.destroy();
+    let allStudents = state.allData;
+    if (state.filters.group !== 'all') {
+        allStudents = allStudents.filter(s => s.組別 === state.filters.group);
     }
-
+    if (state.filters.className !== 'all') {
+        allStudents = allStudents.filter(s => s.班級 === state.filters.className);
+    }
     const mocks = ['一模', '二模', '三模', '四模'];
     
-    // We want to show 25+ and 30+ for each group
-    // Let's create datasets: [全校 25+, 全校 30+, 直升 25+, ...]
-    const datasets = [];
-    const groupColors = [
-        { main: 'rgba(59, 130, 246, 1)', light: 'rgba(59, 130, 246, 0.4)' }, // Blue
-        { main: 'rgba(139, 92, 246, 1)', light: 'rgba(139, 92, 246, 0.4)' }, // Purple
-        { main: 'rgba(236, 72, 153, 1)', light: 'rgba(236, 72, 153, 0.4)' }  // Pink
-    ];
-
-    results.forEach((res, idx) => {
-        datasets.push({
-            label: `${res.label} (>= 25分)`,
-            data: res.stats.map(s => s.count25),
-            backgroundColor: groupColors[idx].light,
-            borderColor: groupColors[idx].main,
-            borderWidth: 1,
-            borderRadius: 4,
-            stack: `stack${idx}`
+    // Calculate data for Pie Charts
+    const chartData = mocks.map(mock => {
+        let over30 = 0, between25and29 = 0, between10and24 = 0, under10 = 0;
+        allStudents.forEach(s => {
+            if (s[mock] && s[mock].總積分) {
+                const score = parseFloatSafe(s[mock].總積分);
+                if (score !== null) {
+                    if (score >= 30) over30++;
+                    else if (score >= 25) between25and29++;
+                    else if (score >= 10) between10and24++;
+                    else under10++;
+                }
+            }
         });
-        datasets.push({
-            label: `${res.label} (>= 30分)`,
-            data: res.stats.map(s => s.count30),
-            backgroundColor: groupColors[idx].main,
-            borderColor: groupColors[idx].main,
-            borderWidth: 1,
-            borderRadius: 4,
-            stack: `stack${idx}`
-        });
+        return [over30, between25and29, between10and24, under10];
     });
 
-    state.charts.cumulative = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: mocks,
-            datasets: datasets
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            interaction: {
-                mode: 'index',
-                intersect: false
+    renderCumulativeCharts(chartData);
+}
+
+function renderCumulativeCharts(chartData) {
+    const labels = ['30分以上', '25-29分', '10-24分', '10分以下'];
+    const colorsArr = [
+        colors.primary,     // Blue for >=30
+        colors.success,     // Green for 25-29
+        '#cbd5e1',          // Gray for 10-24
+        '#ef4444'           // Red for <10
+    ];
+    
+    ['M1', 'M2', 'M3', 'M4'].forEach((mock, index) => {
+        const canvas = document.getElementById(`pieChart${mock}`);
+        if(!canvas) return;
+        const ctx = canvas.getContext('2d');
+        
+        if (state.charts[`pie${mock}`]) {
+            state.charts[`pie${mock}`].destroy();
+        }
+
+        state.charts[`pie${mock}`] = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: chartData[index],
+                    backgroundColor: colorsArr,
+                    borderWidth: 2,
+                    borderColor: '#ffffff',
+                    hoverOffset: 4
+                }]
             },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    title: { display: true, text: '累積人數' },
-                    grid: { color: colors.grid }
-                },
-                x: {
-                    grid: { display: false }
-                }
-            },
-            plugins: {
-                legend: {
-                    position: 'top',
-                    labels: { boxWidth: 12, padding: 15 }
-                },
-                tooltip: {
-                    callbacks: {
-                        footer: (tooltipItems) => {
-                            return '點擊可切換顯示特定組別';
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '60%',
+                plugins: {
+                    legend: { 
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const val = context.raw;
+                                const dataset = context.dataset.data;
+                                const total = dataset.reduce((a, b) => a + b, 0);
+                                const percentage = total > 0 ? ((val / total) * 100).toFixed(1) : 0;
+                                return ` 本區段 (${context.label}): ${val} 人 (${percentage}%)`;
+                            }
                         }
                     }
                 }
             }
-        }
+        });
     });
 }
 
