@@ -10,6 +10,7 @@ const state = {
     },
     charts: {
         classAvg: null,
+        groupAvg: null,
         progress: null,
         radar: null,
         subjectBar: null,
@@ -239,6 +240,7 @@ function setupEventListeners() {
             if (state.charts.radar) state.charts.radar.resize();
             if (state.charts.subjectBar) state.charts.subjectBar.resize();
             if (state.charts.classAvg) state.charts.classAvg.resize();
+            if (state.charts.groupAvg) state.charts.groupAvg.resize();
             ['M1', 'M2', 'M3', 'M4'].forEach(m => {
                 if(state.charts[`pie${m}`]) state.charts[`pie${m}`].resize();
             });
@@ -432,6 +434,112 @@ function renderDashboardView() {
     const m4Data = state.classes.map(c => classStats[c].m4.count > 0 ? (classStats[c].m4.sum / classStats[c].m4.count).toFixed(1) : 0);
 
     renderClassAvgChart(chartLabels, m1Data, m2Data, m3Data, m4Data);
+
+    // Prepare Bar Chart Data (Group averages for all 4 mocks)
+    const groups = [...new Set(dataToProcess.map(s => s.組別))].filter(g => g).sort();
+    const groupStats = {};
+    groups.forEach(g => groupStats[g] = { m1: {sum:0, count:0}, m2: {sum:0, count:0}, m3: {sum:0, count:0}, m4: {sum:0, count:0} });
+
+    dataToProcess.forEach(s => {
+        if (!s.組別) return;
+        if (s.一模 && s.一模.總積分 && groupStats[s.組別]) {
+            groupStats[s.組別].m1.sum += parseFloatSafe(s.一模.總積分) || 0;
+            groupStats[s.組別].m1.count++;
+        }
+        if (s.二模 && s.二模.總積分 && groupStats[s.組別]) {
+            groupStats[s.組別].m2.sum += parseFloatSafe(s.二模.總積分) || 0;
+            groupStats[s.組別].m2.count++;
+        }
+        if (s.三模 && s.三模.總積分 && groupStats[s.組別]) {
+            groupStats[s.組別].m3.sum += parseFloatSafe(s.三模.總積分) || 0;
+            groupStats[s.組別].m3.count++;
+        }
+        if (s.四模 && s.四模.總積分 && groupStats[s.組別]) {
+            groupStats[s.組別].m4.sum += parseFloatSafe(s.四模.總積分) || 0;
+            groupStats[s.組別].m4.count++;
+        }
+    });
+
+    const groupLabels = groups;
+    const gm1Data = groups.map(g => groupStats[g].m1.count > 0 ? (groupStats[g].m1.sum / groupStats[g].m1.count).toFixed(1) : 0);
+    const gm2Data = groups.map(g => groupStats[g].m2.count > 0 ? (groupStats[g].m2.sum / groupStats[g].m2.count).toFixed(1) : 0);
+    const gm3Data = groups.map(g => groupStats[g].m3.count > 0 ? (groupStats[g].m3.sum / groupStats[g].m3.count).toFixed(1) : 0);
+    const gm4Data = groups.map(g => groupStats[g].m4.count > 0 ? (groupStats[g].m4.sum / groupStats[g].m4.count).toFixed(1) : 0);
+
+    renderGroupAvgChart(groupLabels, gm1Data, gm2Data, gm3Data, gm4Data);
+}
+
+function renderGroupAvgChart(labels, m1, m2, m3, m4) {
+    const ctx = document.getElementById('groupAvgChart').getContext('2d');
+    
+    if (state.charts.groupAvg) {
+        state.charts.groupAvg.destroy();
+    }
+
+    state.charts.groupAvg = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: '一模',
+                    data: m1,
+                    backgroundColor: colors.primaryBg,
+                    borderColor: colors.primary,
+                    borderWidth: 1,
+                    borderRadius: 4
+                },
+                {
+                    label: '二模',
+                    data: m2,
+                    backgroundColor: colors.accent1Bg,
+                    borderColor: colors.accent1,
+                    borderWidth: 1,
+                    borderRadius: 4
+                },
+                {
+                    label: '三模',
+                    data: m3,
+                    backgroundColor: colors.accent2Bg,
+                    borderColor: colors.accent2,
+                    borderWidth: 1,
+                    borderRadius: 4
+                },
+                {
+                    label: '四模',
+                    data: m4,
+                    backgroundColor: colors.successBg,
+                    borderColor: colors.success,
+                    borderWidth: 1,
+                    borderRadius: 4
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: { color: colors.grid, drawBorder: false },
+                    ticks: { padding: 10 }
+                },
+                x: {
+                    grid: { display: false, drawBorder: false }
+                }
+            },
+            plugins: {
+                legend: { 
+                    position: 'top',
+                    labels: { color: colors.text }
+                }
+            },
+            animation: {
+                duration: 1500,
+                easing: 'easeOutQuart'
+            }
+        }
+    });
 }
 
 function renderClassAvgChart(labels, m1, m2, m3, m4) {
