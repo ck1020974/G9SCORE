@@ -107,6 +107,8 @@ async function initApp() {
         if (!response.ok) throw new Error('Network response was not ok');
         
         const data = await response.json();
+        console.log("Data loaded successfully. Total students:", data.length);
+        console.log("First student record:", data[0]);
         
         // Setup state
         state.allData = data;
@@ -404,12 +406,12 @@ function renderDashboardView() {
         if (s.會考 && s.會考.總積分) { capSum += parseFloatSafe(s.會考.總積分) || 0; capCount++; }
     });
 
-    elements.totalStudents.textContent = totalCount;
-    elements.avgM1.textContent = m1Count ? (m1Sum / m1Count).toFixed(1) : '--';
-    elements.avgM2.textContent = m2Count ? (m2Sum / m2Count).toFixed(1) : '--';
-    elements.avgM3.textContent = m3Count ? (m3Sum / m3Count).toFixed(1) : '--';
-    elements.avgM4.textContent = m4Count ? (m4Sum / m4Count).toFixed(1) : '--';
-    elements.avgCAP.textContent = capCount ? (capSum / capCount).toFixed(1) : '--';
+    if (elements.totalStudents) elements.totalStudents.textContent = totalCount;
+    if (elements.avgM1) elements.avgM1.textContent = m1Count ? (m1Sum / m1Count).toFixed(1) : '--';
+    if (elements.avgM2) elements.avgM2.textContent = m2Count ? (m2Sum / m2Count).toFixed(1) : '--';
+    if (elements.avgM3) elements.avgM3.textContent = m3Count ? (m3Sum / m3Count).toFixed(1) : '--';
+    if (elements.avgM4) elements.avgM4.textContent = m4Count ? (m4Sum / m4Count).toFixed(1) : '--';
+    if (elements.avgCAP) elements.avgCAP.textContent = capCount ? (capSum / capCount).toFixed(1) : '--';
 
     // Prepare Bar Chart Data (Class averages for all mocks and CAP)
     const classStats = {};
