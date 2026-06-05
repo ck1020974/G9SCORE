@@ -103,7 +103,7 @@ async function initApp() {
     try {
         // In local development without a server, fetch might fail with CORS on file://
         // We'll try to fetch, if it fails, we fall back to a message.
-        const response = await fetch('./scores.json');
+        const response = await fetch('./scores.json?v=' + new Date().getTime());
         if (!response.ok) throw new Error('Network response was not ok');
         
         const data = await response.json();
