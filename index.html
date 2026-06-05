@@ -80,6 +80,10 @@
                         <h4 class="stat-title">全校四模平均</h4>
                         <div class="stat-value" id="avg-m4">--</div>
                     </div>
+                    <div class="stat-card glass-panel">
+                        <h4 class="stat-title">全校會考平均</h4>
+                        <div class="stat-value" id="avg-cap">--</div>
+                    </div>
                 </div>
 
                 <div class="charts-container">
@@ -282,7 +286,7 @@
                     </div>
 
                     <div class="charts-container"
-                        style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;">
+                        style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px;">
                         <div class="chart-wrapper glass-panel" style="padding: 12px; gap: 4px;">
                             <h3 style="font-size: 1rem; margin-bottom: 4px;">一模</h3>
                             <div class="canvas-container" style="height: 180px;">
@@ -305,6 +309,12 @@
                             <h3 style="font-size: 1rem; margin-bottom: 4px;">四模</h3>
                             <div class="canvas-container" style="height: 180px;">
                                 <canvas id="pieChartM4"></canvas>
+                            </div>
+                        </div>
+                        <div class="chart-wrapper glass-panel" style="padding: 12px; gap: 4px;">
+                            <h3 style="font-size: 1rem; margin-bottom: 4px;">會考</h3>
+                            <div class="canvas-container" style="height: 180px;">
+                                <canvas id="pieChartCAP"></canvas>
                             </div>
                         </div>
                     </div>

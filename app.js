@@ -17,7 +17,8 @@ const state = {
         pieM1: null,
         pieM2: null,
         pieM3: null,
-        pieM4: null
+        pieM4: null,
+        pieCAP: null
     }
 };
 
@@ -46,6 +47,7 @@ const elements = {
     avgM2: document.getElementById('avg-m2'),
     avgM3: document.getElementById('avg-m3'),
     avgM4: document.getElementById('avg-m4'),
+    avgCAP: document.getElementById('avg-cap'),
     
     // Student View Details
     studentNameDisplay: document.getElementById('student-name-display'),
@@ -76,6 +78,8 @@ const colors = {
     accent2Bg: 'rgba(236, 72, 153, 0.2)',
     success: 'rgba(16, 185, 129, 1)',
     successBg: 'rgba(16, 185, 129, 0.2)',
+    warning: 'rgba(245, 158, 11, 1)',   // Amber
+    warningBg: 'rgba(245, 158, 11, 0.2)',
     text: '#0f172a', // Dark text for light theme
     grid: 'rgba(0, 0, 0, 0.1)' // Dark grid lines
 };
@@ -241,7 +245,7 @@ function setupEventListeners() {
             if (state.charts.subjectBar) state.charts.subjectBar.resize();
             if (state.charts.classAvg) state.charts.classAvg.resize();
             if (state.charts.groupAvg) state.charts.groupAvg.resize();
-            ['M1', 'M2', 'M3', 'M4'].forEach(m => {
+            ['M1', 'M2', 'M3', 'M4', 'CAP'].forEach(m => {
                 if(state.charts[`pie${m}`]) state.charts[`pie${m}`].resize();
             });
 
@@ -390,12 +394,14 @@ function renderDashboardView() {
     let m2Sum = 0, m2Count = 0;
     let m3Sum = 0, m3Count = 0;
     let m4Sum = 0, m4Count = 0;
+    let capSum = 0, capCount = 0;
 
     dataToProcess.forEach(s => {
         if (s.一模 && s.一模.總積分) { m1Sum += parseFloatSafe(s.一模.總積分) || 0; m1Count++; }
         if (s.二模 && s.二模.總積分) { m2Sum += parseFloatSafe(s.二模.總積分) || 0; m2Count++; }
         if (s.三模 && s.三模.總積分) { m3Sum += parseFloatSafe(s.三模.總積分) || 0; m3Count++; }
         if (s.四模 && s.四模.總積分) { m4Sum += parseFloatSafe(s.四模.總積分) || 0; m4Count++; }
+        if (s.會考 && s.會考.總積分) { capSum += parseFloatSafe(s.會考.總積分) || 0; capCount++; }
     });
 
     elements.totalStudents.textContent = totalCount;
@@ -403,27 +409,40 @@ function renderDashboardView() {
     elements.avgM2.textContent = m2Count ? (m2Sum / m2Count).toFixed(1) : '--';
     elements.avgM3.textContent = m3Count ? (m3Sum / m3Count).toFixed(1) : '--';
     elements.avgM4.textContent = m4Count ? (m4Sum / m4Count).toFixed(1) : '--';
+    elements.avgCAP.textContent = capCount ? (capSum / capCount).toFixed(1) : '--';
 
-    // Prepare Bar Chart Data (Class averages for all 4 mocks)
+    // Prepare Bar Chart Data (Class averages for all mocks and CAP)
     const classStats = {};
-    state.classes.forEach(c => classStats[c] = { m1: {sum:0, count:0}, m2: {sum:0, count:0}, m3: {sum:0, count:0}, m4: {sum:0, count:0} });
+    state.classes.forEach(c => classStats[c] = { 
+        m1: {sum:0, count:0}, 
+        m2: {sum:0, count:0}, 
+        m3: {sum:0, count:0}, 
+        m4: {sum:0, count:0},
+        cap: {sum:0, count:0} 
+    });
 
     dataToProcess.forEach(s => {
-        if (s.一模 && s.一模.總積分 && classStats[s.班級]) {
-            classStats[s.班級].m1.sum += parseFloatSafe(s.一模.總積分) || 0;
-            classStats[s.班級].m1.count++;
-        }
-        if (s.二模 && s.二模.總積分 && classStats[s.班級]) {
-            classStats[s.班級].m2.sum += parseFloatSafe(s.二模.總積分) || 0;
-            classStats[s.班級].m2.count++;
-        }
-        if (s.三模 && s.三模.總積分 && classStats[s.班級]) {
-            classStats[s.班級].m3.sum += parseFloatSafe(s.三模.總積分) || 0;
-            classStats[s.班級].m3.count++;
-        }
-        if (s.四模 && s.四模.總積分 && classStats[s.班級]) {
-            classStats[s.班級].m4.sum += parseFloatSafe(s.四模.總積分) || 0;
-            classStats[s.班級].m4.count++;
+        if (classStats[s.班級]) {
+            if (s.一模 && s.一模.總積分) {
+                classStats[s.班級].m1.sum += parseFloatSafe(s.一模.總積分) || 0;
+                classStats[s.班級].m1.count++;
+            }
+            if (s.二模 && s.二模.總積分) {
+                classStats[s.班級].m2.sum += parseFloatSafe(s.二模.總積分) || 0;
+                classStats[s.班級].m2.count++;
+            }
+            if (s.三模 && s.三模.總積分) {
+                classStats[s.班級].m3.sum += parseFloatSafe(s.三模.總積分) || 0;
+                classStats[s.班級].m3.count++;
+            }
+            if (s.四模 && s.四模.總積分) {
+                classStats[s.班級].m4.sum += parseFloatSafe(s.四模.總積分) || 0;
+                classStats[s.班級].m4.count++;
+            }
+            if (s.會考 && s.會考.總積分) {
+                classStats[s.班級].cap.sum += parseFloatSafe(s.會考.總積分) || 0;
+                classStats[s.班級].cap.count++;
+            }
         }
     });
 
@@ -432,31 +451,44 @@ function renderDashboardView() {
     const m2Data = state.classes.map(c => classStats[c].m2.count > 0 ? (classStats[c].m2.sum / classStats[c].m2.count).toFixed(1) : 0);
     const m3Data = state.classes.map(c => classStats[c].m3.count > 0 ? (classStats[c].m3.sum / classStats[c].m3.count).toFixed(1) : 0);
     const m4Data = state.classes.map(c => classStats[c].m4.count > 0 ? (classStats[c].m4.sum / classStats[c].m4.count).toFixed(1) : 0);
+    const capData = state.classes.map(c => classStats[c].cap.count > 0 ? (classStats[c].cap.sum / classStats[c].cap.count).toFixed(1) : 0);
 
-    renderClassAvgChart(chartLabels, m1Data, m2Data, m3Data, m4Data);
+    renderClassAvgChart(chartLabels, m1Data, m2Data, m3Data, m4Data, capData);
 
-    // Prepare Bar Chart Data (Group averages for all 4 mocks)
+    // Prepare Bar Chart Data (Group averages for all mocks and CAP)
     const groups = [...new Set(dataToProcess.map(s => s.組別))].filter(g => g).sort();
     const groupStats = {};
-    groups.forEach(g => groupStats[g] = { m1: {sum:0, count:0}, m2: {sum:0, count:0}, m3: {sum:0, count:0}, m4: {sum:0, count:0} });
+    groups.forEach(g => groupStats[g] = { 
+        m1: {sum:0, count:0}, 
+        m2: {sum:0, count:0}, 
+        m3: {sum:0, count:0}, 
+        m4: {sum:0, count:0},
+        cap: {sum:0, count:0} 
+    });
 
     dataToProcess.forEach(s => {
         if (!s.組別) return;
-        if (s.一模 && s.一模.總積分 && groupStats[s.組別]) {
-            groupStats[s.組別].m1.sum += parseFloatSafe(s.一模.總積分) || 0;
-            groupStats[s.組別].m1.count++;
-        }
-        if (s.二模 && s.二模.總積分 && groupStats[s.組別]) {
-            groupStats[s.組別].m2.sum += parseFloatSafe(s.二模.總積分) || 0;
-            groupStats[s.組別].m2.count++;
-        }
-        if (s.三模 && s.三模.總積分 && groupStats[s.組別]) {
-            groupStats[s.組別].m3.sum += parseFloatSafe(s.三模.總積分) || 0;
-            groupStats[s.組別].m3.count++;
-        }
-        if (s.四模 && s.四模.總積分 && groupStats[s.組別]) {
-            groupStats[s.組別].m4.sum += parseFloatSafe(s.四模.總積分) || 0;
-            groupStats[s.組別].m4.count++;
+        if (groupStats[s.組別]) {
+            if (s.一模 && s.一模.總積分) {
+                groupStats[s.組別].m1.sum += parseFloatSafe(s.一模.總積分) || 0;
+                groupStats[s.組別].m1.count++;
+            }
+            if (s.二模 && s.二模.總積分) {
+                groupStats[s.組別].m2.sum += parseFloatSafe(s.二模.總積分) || 0;
+                groupStats[s.組別].m2.count++;
+            }
+            if (s.三模 && s.三模.總積分) {
+                groupStats[s.組別].m3.sum += parseFloatSafe(s.三模.總積分) || 0;
+                groupStats[s.組別].m3.count++;
+            }
+            if (s.四模 && s.四模.總積分) {
+                groupStats[s.組別].m4.sum += parseFloatSafe(s.四模.總積分) || 0;
+                groupStats[s.組別].m4.count++;
+            }
+            if (s.會考 && s.會考.總積分) {
+                groupStats[s.組別].cap.sum += parseFloatSafe(s.會考.總積分) || 0;
+                groupStats[s.組別].cap.count++;
+            }
         }
     });
 
@@ -465,11 +497,12 @@ function renderDashboardView() {
     const gm2Data = groups.map(g => groupStats[g].m2.count > 0 ? (groupStats[g].m2.sum / groupStats[g].m2.count).toFixed(1) : 0);
     const gm3Data = groups.map(g => groupStats[g].m3.count > 0 ? (groupStats[g].m3.sum / groupStats[g].m3.count).toFixed(1) : 0);
     const gm4Data = groups.map(g => groupStats[g].m4.count > 0 ? (groupStats[g].m4.sum / groupStats[g].m4.count).toFixed(1) : 0);
+    const gcapData = groups.map(g => groupStats[g].cap.count > 0 ? (groupStats[g].cap.sum / groupStats[g].cap.count).toFixed(1) : 0);
 
-    renderGroupAvgChart(groupLabels, gm1Data, gm2Data, gm3Data, gm4Data);
+    renderGroupAvgChart(groupLabels, gm1Data, gm2Data, gm3Data, gm4Data, gcapData);
 }
 
-function renderGroupAvgChart(labels, m1, m2, m3, m4) {
+function renderGroupAvgChart(labels, m1, m2, m3, m4, cap) {
     const ctx = document.getElementById('groupAvgChart').getContext('2d');
     
     if (state.charts.groupAvg) {
@@ -512,6 +545,14 @@ function renderGroupAvgChart(labels, m1, m2, m3, m4) {
                     borderColor: colors.success,
                     borderWidth: 1,
                     borderRadius: 4
+                },
+                {
+                    label: '會考',
+                    data: cap,
+                    backgroundColor: colors.warningBg,
+                    borderColor: colors.warning,
+                    borderWidth: 1,
+                    borderRadius: 4
                 }
             ]
         },
@@ -542,7 +583,7 @@ function renderGroupAvgChart(labels, m1, m2, m3, m4) {
     });
 }
 
-function renderClassAvgChart(labels, m1, m2, m3, m4) {
+function renderClassAvgChart(labels, m1, m2, m3, m4, cap) {
     const ctx = document.getElementById('classAvgChart').getContext('2d');
     
     if (state.charts.classAvg) {
@@ -583,6 +624,14 @@ function renderClassAvgChart(labels, m1, m2, m3, m4) {
                     data: m4,
                     backgroundColor: colors.successBg,
                     borderColor: colors.success,
+                    borderWidth: 1,
+                    borderRadius: 4
+                },
+                {
+                    label: '會考',
+                    data: cap,
+                    backgroundColor: colors.warningBg,
+                    borderColor: colors.warning,
                     borderWidth: 1,
                     borderRadius: 4
                 }
@@ -654,20 +703,26 @@ function renderStudentView() {
     const m2 = student.二模 || {};
     const m3 = student.三模 || {};
     const m4 = student.四模 || {};
+    const cap = student.會考 || {};
 
     // 1. Progress Chart (Line)
     const progressData = [
         parseFloatSafe(m1.總積分) || null,
         parseFloatSafe(m2.總積分) || null,
         parseFloatSafe(m3.總積分) || null,
-        parseFloatSafe(m4.總積分) || null
+        parseFloatSafe(m4.總積分) || null,
+        parseFloatSafe(cap.總積分) || null
     ];
-    renderProgressChart(['一模', '二模', '三模', '四模'], progressData);
+    renderProgressChart(['一模', '二模', '三模', '四模', '會考'], progressData);
 
     // 2. Radar Chart (Latest Exam)
-    // Finding latest exam with data
-    let latestExam = m4;
-    let examLabel = '四模';
+    // Finding latest exam with data, checking CAP first
+    let latestExam = cap;
+    let examLabel = '會考';
+    if (!latestExam.國) {
+        latestExam = m4;
+        examLabel = '四模';
+    }
     if (!latestExam.國) {
         latestExam = m3;
         examLabel = '三模';
@@ -691,7 +746,7 @@ function renderStudentView() {
     renderRadarChart(['國文', '英文', '數學', '社會', '自然'], radarData, `各科能力狀態 (${examLabel})`);
 
     // 3. Populate Table
-    populateGradesTable(m1, m2, m3, m4);
+    populateGradesTable(m1, m2, m3, m4, cap);
 }
 
 function renderProgressChart(labels, data) {
@@ -829,7 +884,7 @@ function renderSubjectBarChart(className) {
     
     const displayClassName = className === 'all' ? '所有班級 (全校)' : `${className} 班`;
     if(elements.subjectInfoDisplay) elements.subjectInfoDisplay.textContent = ``;
-    if(elements.subjectChartTitle) elements.subjectChartTitle.textContent = `${displayClassName} ${subjectName}科 四次模考比較`;
+    if(elements.subjectChartTitle) elements.subjectChartTitle.textContent = `${displayClassName} ${subjectName}科 模考與會考比較`;
 
     // Filter students
     let students = state.allData;
@@ -842,12 +897,12 @@ function renderSubjectBarChart(className) {
 
     const gradesOrder = ['A++', 'A+', 'A', 'B++', 'B+', 'B', 'C'];
     
-    // Helper to count grades for a specific mock exam
-    const countGrades = (mockKey) => {
+    // Helper to count grades for a specific exam
+    const countGrades = (examKey) => {
         const counts = { 'A++': 0, 'A+': 0, 'A': 0, 'B++': 0, 'B+': 0, 'B': 0, 'C': 0 };
         students.forEach(s => {
-            if (s[mockKey] && s[mockKey][subjectKey]) {
-                const grade = s[mockKey][subjectKey].replace(/\s/g, '').toUpperCase();
+            if (s[examKey] && s[examKey][subjectKey]) {
+                const grade = s[examKey][subjectKey].replace(/\s/g, '').toUpperCase();
                 if (counts[grade] !== undefined) {
                     counts[grade]++;
                 }
@@ -860,6 +915,7 @@ function renderSubjectBarChart(className) {
     const m2Counts = countGrades('二模');
     const m3Counts = countGrades('三模');
     const m4Counts = countGrades('四模');
+    const capCounts = countGrades('會考');
 
     const ctx = document.getElementById('subjectBarChart').getContext('2d');
     if (state.charts.subjectBar) {
@@ -900,6 +956,14 @@ function renderSubjectBarChart(className) {
                     data: m4Counts,
                     backgroundColor: colors.successBg,
                     borderColor: colors.success,
+                    borderWidth: 1,
+                    borderRadius: 4
+                },
+                {
+                    label: '會考',
+                    data: capCounts,
+                    backgroundColor: colors.warningBg,
+                    borderColor: colors.warning,
                     borderWidth: 1,
                     borderRadius: 4
                 }
@@ -960,12 +1024,13 @@ function processTableRow(examName, examData) {
     `;
 }
 
-function populateGradesTable(m1, m2, m3, m4) {
+function populateGradesTable(m1, m2, m3, m4, cap) {
     let html = '';
     html += processTableRow('一模', m1);
     html += processTableRow('二模', m2);
     html += processTableRow('三模', m3);
     html += processTableRow('四模', m4);
+    html += processTableRow('會考', cap);
     elements.gradesTableBody.innerHTML = html;
 }
 
@@ -979,14 +1044,14 @@ function renderCumulativeView() {
     if (state.filters.className !== 'all') {
         allStudents = allStudents.filter(s => s.班級 === state.filters.className);
     }
-    const mocks = ['一模', '二模', '三模', '四模'];
+    const exams = ['一模', '二模', '三模', '四模', '會考'];
     
     // Calculate data for Pie Charts
-    const chartData = mocks.map(mock => {
+    const chartData = exams.map(exam => {
         let over30 = 0, between25and29 = 0, between10and24 = 0, under10 = 0;
         allStudents.forEach(s => {
-            if (s[mock] && s[mock].總積分) {
-                const score = parseFloatSafe(s[mock].總積分);
+            if (s[exam] && s[exam].總積分) {
+                const score = parseFloatSafe(s[exam].總積分);
                 if (score !== null) {
                     if (score >= 30) over30++;
                     else if (score >= 25) between25and29++;
@@ -1010,16 +1075,16 @@ function renderCumulativeCharts(chartData) {
         '#ef4444'           // Red for <10
     ];
     
-    ['M1', 'M2', 'M3', 'M4'].forEach((mock, index) => {
-        const canvas = document.getElementById(`pieChart${mock}`);
+    ['M1', 'M2', 'M3', 'M4', 'CAP'].forEach((exam, index) => {
+        const canvas = document.getElementById(`pieChart${exam}`);
         if(!canvas) return;
         const ctx = canvas.getContext('2d');
         
-        if (state.charts[`pie${mock}`]) {
-            state.charts[`pie${mock}`].destroy();
+        if (state.charts[`pie${exam}`]) {
+            state.charts[`pie${exam}`].destroy();
         }
 
-        state.charts[`pie${mock}`] = new Chart(ctx, {
+        state.charts[`pie${exam}`] = new Chart(ctx, {
             type: 'doughnut',
             data: {
                 labels: labels,
