@@ -424,6 +424,60 @@ function setupEventListeners() {
             renderStudentView();
         }
     });
+
+    // Ranking Table name click delegation (Jump to student view)
+    if(elements.rankingTableBody) {
+        elements.rankingTableBody.addEventListener('click', (e) => {
+            const link = e.target.closest('.student-link');
+            if (link) {
+                e.preventDefault();
+                const cls = link.dataset.class;
+                const seat = link.dataset.seat;
+                navigateToStudentProfile(cls, seat);
+            }
+        });
+    }
+}
+
+function navigateToStudentProfile(cls, seat) {
+    // 1. 更新狀態
+    state.currentView = 'student';
+    state.filters.className = cls;
+    state.filters.studentSeat = seat;
+    
+    // 2. 同步下拉選單 (分組/班級，排除已獨立的 ranking)
+    if(elements.studentClassSelect) elements.studentClassSelect.value = cls;
+    if(elements.subjectClassSelect) elements.subjectClassSelect.value = cls;
+    if(elements.cumulativeClassSelect) elements.cumulativeClassSelect.value = cls;
+    
+    // 3. 填入學生下拉選單並選中
+    populateStudentSelect(cls);
+    if(elements.studentSelect) elements.studentSelect.value = seat;
+    
+    // 4. 更新 Sidebar 按鈕選中狀態
+    elements.navBtns.forEach(btn => {
+        if (btn.dataset.view === 'student') {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+    
+    // 5. 切換視圖 Section
+    elements.views.forEach(v => {
+        if (v.id === 'view-student') {
+            v.classList.add('active');
+        } else {
+            v.classList.remove('active');
+        }
+    });
+    
+    // 6. 渲染個人表現
+    renderStudentView();
+    
+    // 7. 觸發圖表 resize 確保正常繪製
+    if (state.charts.progress) state.charts.progress.resize();
+    if (state.charts.radar) state.charts.radar.resize();
 }
 
 // --- Dashboard View Rendering ---
@@ -1314,7 +1368,9 @@ function renderRankingView() {
         html += `
             <tr>
                 <td style="font-weight: 700; color: var(--text-color);">${item.rank}</td>
-                <td style="font-weight: 600;">${s.姓名}</td>
+                <td style="font-weight: 600;">
+                    <a href="#" class="student-link" data-class="${s.班級}" data-seat="${s.座號}">${s.姓名}</a>
+                </td>
                 <td>${s.班級} 班</td>
                 <td>${s.組別 || '-'}</td>
                 <td style="font-weight: bold; color: var(--text-color);">${item.score.toFixed(1)}</td>

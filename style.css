@@ -492,3 +492,17 @@ select option {
         grid-template-columns: 1fr 1fr;
     }
 }
+
+/* 總體排名姓名跳轉連結樣式 */
+.student-link {
+    color: var(--primary);
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.2s ease;
+    cursor: pointer;
+}
+
+.student-link:hover {
+    color: var(--accent-1);
+    text-decoration: underline;
+}
