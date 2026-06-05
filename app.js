@@ -7,7 +7,9 @@ const state = {
         className: 'all',
         studentSeat: null,
         group: 'all',
-        rankingExam: ''
+        rankingExam: '',
+        rankingGroup: 'all',
+        rankingClass: 'all'
     },
     charts: {
         classAvg: null,
@@ -126,6 +128,7 @@ async function initApp() {
         
         // Populate UI
         populateClassSelect();
+        populateRankingClassSelect();
         
         // Hide loading
         elements.loadingIndicator.classList.add('hidden');
@@ -194,7 +197,21 @@ function populateClassSelect() {
     if(elements.studentClassSelect) elements.studentClassSelect.innerHTML = optionsHTML;
     if(elements.subjectClassSelect) elements.subjectClassSelect.innerHTML = optionsHTML;
     if(elements.cumulativeClassSelect) elements.cumulativeClassSelect.innerHTML = optionsHTML;
-    if(elements.rankingClassSelect) elements.rankingClassSelect.innerHTML = optionsHTML;
+}
+
+function populateRankingClassSelect() {
+    if (!elements.rankingClassSelect) return;
+    
+    let classes = state.classes;
+    if (state.filters.rankingGroup !== 'all') {
+        const classesInGroup = new Set(state.allData.filter(s => s.組別 === state.filters.rankingGroup).map(s => s.班級));
+        classes = Array.from(classesInGroup).sort();
+    }
+
+    const optionsHTML = '<option value="all">所有班級</option>' + 
+        classes.map(c => `<option value="${c}">${c} 班</option>`).join('');
+    
+    elements.rankingClassSelect.innerHTML = optionsHTML;
 }
 
 function populateStudentSelect(className) {
@@ -232,17 +249,15 @@ function updateGlobalGroup(groupValue) {
     
     state.filters.className = 'all';
     
-    // 同步所有的 Group Selects
+    // 同步所有的 Group Selects (排除 rankingGroupSelect)
     if(elements.studentGroupSelect) elements.studentGroupSelect.value = groupValue;
     if(elements.subjectGroupSelect) elements.subjectGroupSelect.value = groupValue;
     if(elements.cumulativeGroupSelect) elements.cumulativeGroupSelect.value = groupValue;
-    if(elements.rankingGroupSelect) elements.rankingGroupSelect.value = groupValue;
     
-    // 同步所有的 Class Selects 到 'all'
+    // 同步所有的 Class Selects 到 'all' (排除 rankingClassSelect)
     if(elements.studentClassSelect) elements.studentClassSelect.value = 'all';
     if(elements.subjectClassSelect) elements.subjectClassSelect.value = 'all';
     if(elements.cumulativeClassSelect) elements.cumulativeClassSelect.value = 'all';
-    if(elements.rankingClassSelect) elements.rankingClassSelect.value = 'all';
     
     populateStudentSelect('all');
     resetStudentView();
@@ -253,11 +268,10 @@ function updateGlobalGroup(groupValue) {
 function updateGlobalClass(classValue) {
     state.filters.className = classValue;
     
-    // 同步所有的 Class Selects
+    // 同步所有的 Class Selects (排除 rankingClassSelect)
     if(elements.studentClassSelect) elements.studentClassSelect.value = classValue;
     if(elements.subjectClassSelect) elements.subjectClassSelect.value = classValue;
     if(elements.cumulativeClassSelect) elements.cumulativeClassSelect.value = classValue;
-    if(elements.rankingClassSelect) elements.rankingClassSelect.value = classValue;
     
     if (elements.studentSelect) {
         populateStudentSelect(classValue);
@@ -272,8 +286,6 @@ function triggerViewRender() {
         renderSubjectBarChart(state.filters.className);
     } else if (state.currentView === 'cumulative') {
         renderCumulativeView();
-    } else if (state.currentView === 'ranking') {
-        renderRankingView();
     }
 }
 
@@ -330,7 +342,13 @@ function setupEventListeners() {
         elements.cumulativeGroupSelect.addEventListener('change', (e) => updateGlobalGroup(e.target.value));
     }
     if(elements.rankingGroupSelect) {
-        elements.rankingGroupSelect.addEventListener('change', (e) => updateGlobalGroup(e.target.value));
+        elements.rankingGroupSelect.addEventListener('change', (e) => {
+            state.filters.rankingGroup = e.target.value;
+            populateRankingClassSelect();
+            state.filters.rankingClass = 'all';
+            if (elements.rankingClassSelect) elements.rankingClassSelect.value = 'all';
+            renderRankingView();
+        });
     }
 
     // Class selection changes
@@ -344,7 +362,10 @@ function setupEventListeners() {
         elements.cumulativeClassSelect.addEventListener('change', (e) => updateGlobalClass(e.target.value));
     }
     if(elements.rankingClassSelect) {
-        elements.rankingClassSelect.addEventListener('change', (e) => updateGlobalClass(e.target.value));
+        elements.rankingClassSelect.addEventListener('change', (e) => {
+            state.filters.rankingClass = e.target.value;
+            renderRankingView();
+        });
     }
 
     // Ranking Exam selection change
@@ -1228,12 +1249,12 @@ function renderRankingView() {
         }
         
         // 分組篩選
-        if (state.filters.group !== 'all' && s.組別 !== state.filters.group) {
+        if (state.filters.rankingGroup !== 'all' && s.組別 !== state.filters.rankingGroup) {
             return false;
         }
         
         // 班級篩選
-        if (state.filters.className !== 'all' && s.班級 !== state.filters.className) {
+        if (state.filters.rankingClass !== 'all' && s.班級 !== state.filters.rankingClass) {
             return false;
         }
         
@@ -1266,8 +1287,8 @@ function renderRankingView() {
     }
     
     // 5. 更新表格標題
-    const displayGroup = state.filters.group === 'all' ? '全校' : state.filters.group;
-    const displayClass = state.filters.className === 'all' ? '所有班級' : `${state.filters.className} 班`;
+    const displayGroup = state.filters.rankingGroup === 'all' ? '全校' : state.filters.rankingGroup;
+    const displayClass = state.filters.rankingClass === 'all' ? '所有班級' : `${state.filters.rankingClass} 班`;
     const tableTitle = document.getElementById('ranking-table-title');
     if (tableTitle) {
         tableTitle.textContent = `${displayGroup} | ${displayClass} | ${examKey} 排名結果 (共 ${rankedStudents.length} 人)`;
