@@ -35,6 +35,9 @@
                 <button class="nav-btn" data-view="student">
                     <span class="icon">🧑‍🎓</span> 個人表現
                 </button>
+                <button class="nav-btn" data-view="ranking">
+                    <span class="icon">🏆</span> 總體排名
+                </button>
                 <button class="nav-btn" data-view="subject">
                     <span class="icon">📈</span> 各科分佈
                 </button>
@@ -320,9 +323,79 @@
                     </div>
 
                 </div>
-    </div>
-    </section>
-    </main>
+            </section>
+
+            <!-- Ranking View -->
+            <section id="view-ranking" class="view-section">
+                <header class="section-header">
+                    <h1>總體排名分析</h1>
+                    <p class="subtitle" id="ranking-info-display">請選擇考試項目以載入排名計分板</p>
+                </header>
+
+                <div class="filters">
+                    <div class="filter-group">
+                        <label for="ranking-exam-select">選擇考試 (必選)：</label>
+                        <select id="ranking-exam-select">
+                            <option value="">請選擇考試項目...</option>
+                            <option value="一模">一模</option>
+                            <option value="二模">二模</option>
+                            <option value="三模">三模</option>
+                            <option value="四模">四模</option>
+                            <option value="會考">會考</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="ranking-group-select">選擇分組：</label>
+                        <select id="ranking-group-select">
+                            <option value="all">全校</option>
+                            <option value="直升班">直升班</option>
+                            <option value="會考組">會考組</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="ranking-class-select">選擇班級：</label>
+                        <select id="ranking-class-select">
+                            <option value="all">所有班級</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="placeholder-state" id="ranking-dashboard-content">
+                    <div class="placeholder-message">
+                        <div class="icon">🏆</div>
+                        <p>請先選擇考試項目以載入排名計分板</p>
+                    </div>
+                </div>
+
+                <div class="ranking-dashboard active-state hidden" id="ranking-dashboard-active">
+                    <div class="grades-breakdown glass-panel mb-4" style="margin-bottom: 1.5rem;">
+                        <h3 id="ranking-table-title">排名結果</h3>
+                        <div class="table-container">
+                            <table class="grades-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 80px;">名次</th>
+                                        <th>姓名</th>
+                                        <th>班級</th>
+                                        <th>組別</th>
+                                        <th>總積分</th>
+                                        <th>國文</th>
+                                        <th>英文</th>
+                                        <th>數學</th>
+                                        <th>社會</th>
+                                        <th>自然</th>
+                                        <th>寫作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="ranking-table-body">
+                                    <!-- Populated by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
     </div>
 
     <script src="app.js?v=7"></script>

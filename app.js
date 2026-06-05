@@ -6,7 +6,8 @@ const state = {
     filters: {
         className: 'all',
         studentSeat: null,
-        group: 'all'
+        group: 'all',
+        rankingExam: ''
     },
     charts: {
         classAvg: null,
@@ -37,6 +38,13 @@ const elements = {
     subjectGroupSelect: document.getElementById('subject-group-select'),
     cumulativeGroupSelect: document.getElementById('cumulative-group-select'),
     cumulativeClassSelect: document.getElementById('cumulative-class-select'),
+    rankingExamSelect: document.getElementById('ranking-exam-select'),
+    rankingGroupSelect: document.getElementById('ranking-group-select'),
+    rankingClassSelect: document.getElementById('ranking-class-select'),
+    rankingDashboardPlaceholder: document.getElementById('ranking-dashboard-content'),
+    rankingDashboardActive: document.getElementById('ranking-dashboard-active'),
+    rankingTableBody: document.getElementById('ranking-table-body'),
+    rankingInfoDisplay: document.getElementById('ranking-info-display'),
     
     // Loading State
     loadingIndicator: document.getElementById('loading-indicator'),
@@ -186,6 +194,7 @@ function populateClassSelect() {
     if(elements.studentClassSelect) elements.studentClassSelect.innerHTML = optionsHTML;
     if(elements.subjectClassSelect) elements.subjectClassSelect.innerHTML = optionsHTML;
     if(elements.cumulativeClassSelect) elements.cumulativeClassSelect.innerHTML = optionsHTML;
+    if(elements.rankingClassSelect) elements.rankingClassSelect.innerHTML = optionsHTML;
 }
 
 function populateStudentSelect(className) {
@@ -215,6 +224,57 @@ function populateStudentSelect(className) {
         option.textContent = `${seatNum} - ${student.姓名}`;
         elements.studentSelect.appendChild(option);
     });
+}
+
+function updateGlobalGroup(groupValue) {
+    state.filters.group = groupValue;
+    populateClassSelect();
+    
+    state.filters.className = 'all';
+    
+    // 同步所有的 Group Selects
+    if(elements.studentGroupSelect) elements.studentGroupSelect.value = groupValue;
+    if(elements.subjectGroupSelect) elements.subjectGroupSelect.value = groupValue;
+    if(elements.cumulativeGroupSelect) elements.cumulativeGroupSelect.value = groupValue;
+    if(elements.rankingGroupSelect) elements.rankingGroupSelect.value = groupValue;
+    
+    // 同步所有的 Class Selects 到 'all'
+    if(elements.studentClassSelect) elements.studentClassSelect.value = 'all';
+    if(elements.subjectClassSelect) elements.subjectClassSelect.value = 'all';
+    if(elements.cumulativeClassSelect) elements.cumulativeClassSelect.value = 'all';
+    if(elements.rankingClassSelect) elements.rankingClassSelect.value = 'all';
+    
+    populateStudentSelect('all');
+    resetStudentView();
+    
+    triggerViewRender();
+}
+
+function updateGlobalClass(classValue) {
+    state.filters.className = classValue;
+    
+    // 同步所有的 Class Selects
+    if(elements.studentClassSelect) elements.studentClassSelect.value = classValue;
+    if(elements.subjectClassSelect) elements.subjectClassSelect.value = classValue;
+    if(elements.cumulativeClassSelect) elements.cumulativeClassSelect.value = classValue;
+    if(elements.rankingClassSelect) elements.rankingClassSelect.value = classValue;
+    
+    if (elements.studentSelect) {
+        populateStudentSelect(classValue);
+        resetStudentView();
+    }
+    
+    triggerViewRender();
+}
+
+function triggerViewRender() {
+    if (state.currentView === 'subject') {
+        renderSubjectBarChart(state.filters.className);
+    } else if (state.currentView === 'cumulative') {
+        renderCumulativeView();
+    } else if (state.currentView === 'ranking') {
+        renderRankingView();
+    }
 }
 
 function setupEventListeners() {
@@ -253,79 +313,45 @@ function setupEventListeners() {
 
             if (viewId === 'cumulative') {
                 renderCumulativeView();
+            } else if (viewId === 'ranking') {
+                renderRankingView();
             }
         });
     });
 
-    // Student Group selection change
+    // Group selection changes
     if(elements.studentGroupSelect) {
-        elements.studentGroupSelect.addEventListener('change', (e) => {
-            state.filters.group = e.target.value;
-            // update class dropdowns based on group
-            populateClassSelect();
-            state.filters.className = 'all';
-            elements.studentClassSelect.value = 'all';
-            if(elements.subjectClassSelect) elements.subjectClassSelect.value = 'all';
-            if(elements.cumulativeClassSelect) elements.cumulativeClassSelect.value = 'all';
-            populateStudentSelect('all');
-            resetStudentView();
-        });
+        elements.studentGroupSelect.addEventListener('change', (e) => updateGlobalGroup(e.target.value));
     }
-
-    // Student Class selection change
-    if(elements.studentClassSelect) {
-        elements.studentClassSelect.addEventListener('change', (e) => {
-            state.filters.className = e.target.value;
-            if(elements.subjectClassSelect) elements.subjectClassSelect.value = state.filters.className;
-            if(elements.cumulativeClassSelect) elements.cumulativeClassSelect.value = state.filters.className;
-            populateStudentSelect(state.filters.className);
-            resetStudentView();
-        });
-    }
-
-    // Subject Class selection change
-    if(elements.subjectClassSelect) {
-        elements.subjectClassSelect.addEventListener('change', (e) => {
-            state.filters.className = e.target.value;
-            if(elements.studentClassSelect) elements.studentClassSelect.value = state.filters.className;
-            if(elements.cumulativeClassSelect) elements.cumulativeClassSelect.value = state.filters.className;
-            renderSubjectBarChart(state.filters.className);
-        });
-    }
-
-    // Subject Group selection change
     if(elements.subjectGroupSelect) {
-        elements.subjectGroupSelect.addEventListener('change', (e) => {
-            state.filters.group = e.target.value;
-            populateClassSelect();
-            state.filters.className = 'all';
-            elements.subjectClassSelect.value = 'all';
-            if(elements.studentClassSelect) elements.studentClassSelect.value = 'all';
-            if(elements.cumulativeClassSelect) elements.cumulativeClassSelect.value = 'all';
-            renderSubjectBarChart(state.filters.className);
-        });
+        elements.subjectGroupSelect.addEventListener('change', (e) => updateGlobalGroup(e.target.value));
     }
-
-    // Cumulative Group selection change
     if(elements.cumulativeGroupSelect) {
-        elements.cumulativeGroupSelect.addEventListener('change', (e) => {
-            state.filters.group = e.target.value;
-            populateClassSelect();
-            state.filters.className = 'all';
-            if(elements.cumulativeClassSelect) elements.cumulativeClassSelect.value = 'all';
-            if(elements.studentClassSelect) elements.studentClassSelect.value = 'all';
-            if(elements.subjectClassSelect) elements.subjectClassSelect.value = 'all';
-            renderCumulativeView();
-        });
+        elements.cumulativeGroupSelect.addEventListener('change', (e) => updateGlobalGroup(e.target.value));
+    }
+    if(elements.rankingGroupSelect) {
+        elements.rankingGroupSelect.addEventListener('change', (e) => updateGlobalGroup(e.target.value));
     }
 
-    // Cumulative Class selection change
+    // Class selection changes
+    if(elements.studentClassSelect) {
+        elements.studentClassSelect.addEventListener('change', (e) => updateGlobalClass(e.target.value));
+    }
+    if(elements.subjectClassSelect) {
+        elements.subjectClassSelect.addEventListener('change', (e) => updateGlobalClass(e.target.value));
+    }
     if(elements.cumulativeClassSelect) {
-        elements.cumulativeClassSelect.addEventListener('change', (e) => {
-            state.filters.className = e.target.value;
-            if(elements.studentClassSelect) elements.studentClassSelect.value = state.filters.className;
-            if(elements.subjectClassSelect) elements.subjectClassSelect.value = state.filters.className;
-            renderCumulativeView();
+        elements.cumulativeClassSelect.addEventListener('change', (e) => updateGlobalClass(e.target.value));
+    }
+    if(elements.rankingClassSelect) {
+        elements.rankingClassSelect.addEventListener('change', (e) => updateGlobalClass(e.target.value));
+    }
+
+    // Ranking Exam selection change
+    if(elements.rankingExamSelect) {
+        elements.rankingExamSelect.addEventListener('change', (e) => {
+            state.filters.rankingExam = e.target.value;
+            renderRankingView();
         });
     }
 
@@ -1121,6 +1147,166 @@ function renderCumulativeCharts(chartData) {
             }
         });
     });
+}
+
+function compareStudents(a, b, examKey) {
+    // 降序排序: 若 b 的值優於 a 的值，應回傳正數
+    
+    // 先比總積分
+    if (b.score !== a.score) {
+        return b.score - a.score;
+    }
+    
+    const examA = a.student[examKey];
+    const examB = b.student[examKey];
+    
+    // 1. 比寫作 (作)
+    const essayA = parseFloatSafe(examA.作) || 0;
+    const essayB = parseFloatSafe(examB.作) || 0;
+    if (essayB !== essayA) {
+        return essayB - essayA;
+    }
+    
+    // 2. 比國文
+    const chiA = gradeToNumber(examA.國);
+    const chiB = gradeToNumber(examB.國);
+    if (chiB !== chiA) {
+        return chiB - chiA;
+    }
+    
+    // 3. 比英文
+    const engA = gradeToNumber(examA.英);
+    const engB = gradeToNumber(examB.英);
+    if (engB !== engA) {
+        return engB - engA;
+    }
+    
+    // 4. 比數學
+    const mathA = gradeToNumber(examA.數);
+    const mathB = gradeToNumber(examB.數);
+    if (mathB !== mathA) {
+        return mathB - mathA;
+    }
+    
+    // 5. 比社會
+    const socA = gradeToNumber(examA.社);
+    const socB = gradeToNumber(examB.社);
+    if (socB !== socA) {
+        return socB - socA;
+    }
+    
+    // 6. 比自然
+    const sciA = gradeToNumber(examA.自);
+    const sciB = gradeToNumber(examB.自);
+    if (sciB !== sciA) {
+        return sciB - sciA;
+    }
+    
+    return 0;
+}
+
+function renderRankingView() {
+    const examKey = state.filters.rankingExam;
+    
+    // 1. 檢查前置條件
+    if (!examKey) {
+        if (elements.rankingDashboardPlaceholder) elements.rankingDashboardPlaceholder.classList.remove('hidden');
+        if (elements.rankingDashboardActive) elements.rankingDashboardActive.classList.add('hidden');
+        if (elements.rankingInfoDisplay) elements.rankingInfoDisplay.textContent = '請選擇考試項目以載入排名計分板';
+        return;
+    }
+    
+    if (elements.rankingDashboardPlaceholder) elements.rankingDashboardPlaceholder.classList.add('hidden');
+    if (elements.rankingDashboardActive) elements.rankingDashboardActive.classList.remove('hidden');
+    if (elements.rankingInfoDisplay) elements.rankingInfoDisplay.textContent = '';
+    
+    // 2. 篩選資料
+    let filteredStudents = state.allData.filter(s => {
+        // 必須在該次考試有總積分資料
+        if (!s[examKey] || s[examKey].總積分 === undefined || s[examKey].總積分 === null || s[examKey].總積分 === '') {
+            return false;
+        }
+        
+        // 分組篩選
+        if (state.filters.group !== 'all' && s.組別 !== state.filters.group) {
+            return false;
+        }
+        
+        // 班級篩選
+        if (state.filters.className !== 'all' && s.班級 !== state.filters.className) {
+            return false;
+        }
+        
+        return true;
+    });
+    
+    // 3. 排序資料 (依總積分降序排序，若相同則依序比作、國、英、數、社、自)
+    const sortedItems = filteredStudents.map(s => {
+        return {
+            student: s,
+            score: parseFloatSafe(s[examKey].總積分) || 0
+        };
+    }).sort((a, b) => compareStudents(a, b, examKey));
+    
+    // 4. 計算名次 (標準競賽平局排名，但以同分判優破局：只有當全部科目均完全平手時才並列名次)
+    let currentRank = 1;
+    const rankedStudents = [];
+    for (let i = 0; i < sortedItems.length; i++) {
+        if (i > 0) {
+            // 與前一位完全平手 (compareResult === 0) 則並列名次；否則名次跳到 index + 1 (i + 1)
+            const isDifferent = compareStudents(sortedItems[i-1], sortedItems[i], examKey) !== 0;
+            if (isDifferent) {
+                currentRank = i + 1;
+            }
+        }
+        rankedStudents.push({
+            ...sortedItems[i],
+            rank: currentRank
+        });
+    }
+    
+    // 5. 更新表格標題
+    const displayGroup = state.filters.group === 'all' ? '全校' : state.filters.group;
+    const displayClass = state.filters.className === 'all' ? '所有班級' : `${state.filters.className} 班`;
+    const tableTitle = document.getElementById('ranking-table-title');
+    if (tableTitle) {
+        tableTitle.textContent = `${displayGroup} | ${displayClass} | ${examKey} 排名結果 (共 ${rankedStudents.length} 人)`;
+    }
+    
+    // 6. 渲染表格
+    if (rankedStudents.length === 0) {
+        elements.rankingTableBody.innerHTML = `
+            <tr>
+                <td colspan="11" style="color: var(--text-muted); text-align: center; padding: 32px;">
+                    無符合條件之排名資料
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    let html = '';
+    rankedStudents.forEach(item => {
+        const s = item.student;
+        const examData = s[examKey];
+        
+        html += `
+            <tr>
+                <td style="font-weight: 700; color: var(--text-color);">${item.rank}</td>
+                <td style="font-weight: 600;">${s.姓名}</td>
+                <td>${s.班級} 班</td>
+                <td>${s.組別 || '-'}</td>
+                <td style="font-weight: bold; color: var(--text-color);">${item.score.toFixed(1)}</td>
+                <td class="${getGradeClass(examData.國)}">${examData.國 || '-'}</td>
+                <td class="${getGradeClass(examData.英)}">${examData.英 || '-'}</td>
+                <td class="${getGradeClass(examData.數)}">${examData.數 || '-'}</td>
+                <td class="${getGradeClass(examData.社)}">${examData.社 || '-'}</td>
+                <td class="${getGradeClass(examData.自)}">${examData.自 || '-'}</td>
+                <td style="color: var(--warning); font-weight: 600;">${examData.作 || '-'}</td>
+            </tr>
+        `;
+    });
+    elements.rankingTableBody.innerHTML = html;
 }
 
 // Bootstrap
