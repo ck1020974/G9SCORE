@@ -106,6 +106,41 @@ Chart.defaults.plugins.tooltip.cornerRadius = 8;
 Chart.defaults.plugins.tooltip.borderColor = 'rgba(255, 255, 255, 0.1)';
 Chart.defaults.plugins.tooltip.borderWidth = 1;
 
+// Custom plugin to render text inside doughnut cutout
+const doughnutCenterTextPlugin = {
+    id: 'doughnutCenterText',
+    beforeDraw: function(chart) {
+        if (chart.config.options.plugins && chart.config.options.plugins.doughnutCenterText) {
+            const ctx = chart.ctx;
+            const centerConfig = chart.config.options.plugins.doughnutCenterText;
+            const fontStyle = centerConfig.fontStyle || 'sans-serif';
+            const txtLine1 = centerConfig.line1 || '';
+            const txtLine2 = centerConfig.line2 || '';
+            const color = centerConfig.color || '#000';
+            
+            const centerX = (chart.chartArea.left + chart.chartArea.right) / 2;
+            const centerY = (chart.chartArea.top + chart.chartArea.bottom) / 2;
+            
+            ctx.save();
+            
+            // Line 1: 5A count
+            ctx.font = "bold 15px " + fontStyle;
+            ctx.fillStyle = color;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(txtLine1, centerX, centerY - 10);
+            
+            // Line 2: percentage
+            ctx.font = "normal 12px " + fontStyle;
+            ctx.fillStyle = 'rgba(100, 116, 139, 1)';
+            ctx.fillText(txtLine2, centerX, centerY + 10);
+            
+            ctx.restore();
+        }
+    }
+};
+Chart.register(doughnutCenterTextPlugin);
+
 
 // --- Initialization ---
 
@@ -1150,26 +1185,47 @@ function renderCumulativeView() {
     const exams = ['一模', '二模', '三模', '四模', '會考'];
     
     // Calculate data for Pie Charts
+    const fiveAStats = [];
     const chartData = exams.map(exam => {
         let over30 = 0, between25and29 = 0, between10and24 = 0, under10 = 0;
+        let fiveACount = 0;
+        let validCount = 0;
+        
         allStudents.forEach(s => {
             if (s[exam] && s[exam].總積分) {
                 const score = parseFloatSafe(s[exam].總積分);
                 if (score !== null) {
+                    validCount++;
                     if (score >= 30) over30++;
                     else if (score >= 25) between25and29++;
                     else if (score >= 10) between10and24++;
                     else under10++;
+                    
+                    // 5A 判定 (國、英、數、社、自皆達 A 以上)
+                    const examData = s[exam];
+                    if (examData.國 && examData.英 && examData.數 && examData.社 && examData.自) {
+                        const is5A = ['國', '英', '數', '社', '自'].every(sub => examData[sub] && examData[sub].includes('A'));
+                        if (is5A) {
+                            fiveACount++;
+                        }
+                    }
                 }
             }
         });
+        
+        const percent = validCount > 0 ? ((fiveACount / validCount) * 100).toFixed(1) : '0.0';
+        fiveAStats.push({
+            count: fiveACount,
+            percentage: percent
+        });
+        
         return [over30, between25and29, between10and24, under10];
     });
 
-    renderCumulativeCharts(chartData);
+    renderCumulativeCharts(chartData, fiveAStats);
 }
 
-function renderCumulativeCharts(chartData) {
+function renderCumulativeCharts(chartData, fiveAStats) {
     const labels = ['30分以上', '25-29分', '10-24分', '10分以下'];
     const colorsArr = [
         colors.primary,     // Blue for >=30
@@ -1186,6 +1242,8 @@ function renderCumulativeCharts(chartData) {
         if (state.charts[`pie${exam}`]) {
             state.charts[`pie${exam}`].destroy();
         }
+
+        const stats = fiveAStats[index];
 
         state.charts[`pie${exam}`] = new Chart(ctx, {
             type: 'doughnut',
@@ -1217,6 +1275,12 @@ function renderCumulativeCharts(chartData) {
                                 return ` 本區段 (${context.label}): ${val} 人 (${percentage}%)`;
                             }
                         }
+                    },
+                    doughnutCenterText: {
+                        line1: `5A: ${stats.count}人`,
+                        line2: `${stats.percentage}%`,
+                        color: colors.text,
+                        fontStyle: "'Noto Sans TC', 'Inter', sans-serif"
                     }
                 }
             }
