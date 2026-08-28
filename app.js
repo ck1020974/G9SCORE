@@ -194,6 +194,24 @@ function parseFloatSafe(val) {
     return isNaN(parsed) ? null : parsed;
 }
 
+function isExternalCandidate(student) {
+    return student.外考生 === true;
+}
+
+function formatClassLabel(className) {
+    return className === '外考' ? '外考生' : `${className} 班`;
+}
+
+function matchesGroup(student, groupName) {
+    return groupName === 'all' ||
+        student.組別 === groupName ||
+        student.額外分組 === groupName;
+}
+
+function getStudentGroups(student) {
+    return [...new Set([student.組別, student.額外分組].filter(Boolean))];
+}
+
 // Map grade letter to a numerical value for radar chart representation
 // A++ (7), A+ (6), A (5), B++ (4), B+ (3), B (2), C (1)
 function gradeToNumber(grade) {
@@ -222,12 +240,12 @@ function getGradeClass(grade) {
 function populateClassSelect() {
     let classes = state.classes;
     if (state.filters.group !== 'all') {
-        const classesInGroup = new Set(state.allData.filter(s => s.組別 === state.filters.group).map(s => s.班級));
+        const classesInGroup = new Set(state.allData.filter(s => matchesGroup(s, state.filters.group)).map(s => s.班級));
         classes = Array.from(classesInGroup).sort();
     }
 
     const optionsHTML = '<option value="all">所有班級</option>' + 
-        classes.map(c => `<option value="${c}">${c} 班</option>`).join('');
+        classes.map(c => `<option value="${c}">${formatClassLabel(c)}</option>`).join('');
     
     if(elements.studentClassSelect) elements.studentClassSelect.innerHTML = optionsHTML;
     if(elements.subjectClassSelect) elements.subjectClassSelect.innerHTML = optionsHTML;
@@ -239,12 +257,12 @@ function populateRankingClassSelect() {
     
     let classes = state.classes;
     if (state.filters.rankingGroup !== 'all') {
-        const classesInGroup = new Set(state.allData.filter(s => s.組別 === state.filters.rankingGroup).map(s => s.班級));
+        const classesInGroup = new Set(state.allData.filter(s => matchesGroup(s, state.filters.rankingGroup)).map(s => s.班級));
         classes = Array.from(classesInGroup).sort();
     }
 
     const optionsHTML = '<option value="all">所有班級</option>' + 
-        classes.map(c => `<option value="${c}">${c} 班</option>`).join('');
+        classes.map(c => `<option value="${c}">${formatClassLabel(c)}</option>`).join('');
     
     elements.rankingClassSelect.innerHTML = optionsHTML;
 }
@@ -254,7 +272,7 @@ function populateStudentSelect(className) {
     
     let students = state.allData;
     if (state.filters.group !== 'all') {
-        students = students.filter(s => s.組別 === state.filters.group);
+        students = students.filter(s => matchesGroup(s, state.filters.group));
     }
 
     if (className === 'all') {
@@ -439,8 +457,8 @@ function setupEventListeners() {
         
         // Find first matching student across all data
         const termLooseMatch = parseInt(term, 10);
-        const student = state.allData.find(s => 
-            s.姓名.toLowerCase().includes(term) || 
+        const student = state.allData.find(s =>
+            s.姓名.toLowerCase().includes(term) ||
             s.座號 == termLooseMatch ||
             String(s.座號).padStart(2, '0') === term ||
             String(s.座號) === term
@@ -584,17 +602,17 @@ function renderDashboardView() {
         }
     });
 
-    const chartLabels = state.classes.map(c => `${c}班`);
-    const m1Data = state.classes.map(c => classStats[c].m1.count > 0 ? (classStats[c].m1.sum / classStats[c].m1.count).toFixed(1) : 0);
-    const m2Data = state.classes.map(c => classStats[c].m2.count > 0 ? (classStats[c].m2.sum / classStats[c].m2.count).toFixed(1) : 0);
-    const m3Data = state.classes.map(c => classStats[c].m3.count > 0 ? (classStats[c].m3.sum / classStats[c].m3.count).toFixed(1) : 0);
-    const m4Data = state.classes.map(c => classStats[c].m4.count > 0 ? (classStats[c].m4.sum / classStats[c].m4.count).toFixed(1) : 0);
-    const capData = state.classes.map(c => classStats[c].cap.count > 0 ? (classStats[c].cap.sum / classStats[c].cap.count).toFixed(1) : 0);
+    const chartLabels = state.classes.map(formatClassLabel);
+    const m1Data = state.classes.map(c => classStats[c].m1.count > 0 ? (classStats[c].m1.sum / classStats[c].m1.count).toFixed(1) : null);
+    const m2Data = state.classes.map(c => classStats[c].m2.count > 0 ? (classStats[c].m2.sum / classStats[c].m2.count).toFixed(1) : null);
+    const m3Data = state.classes.map(c => classStats[c].m3.count > 0 ? (classStats[c].m3.sum / classStats[c].m3.count).toFixed(1) : null);
+    const m4Data = state.classes.map(c => classStats[c].m4.count > 0 ? (classStats[c].m4.sum / classStats[c].m4.count).toFixed(1) : null);
+    const capData = state.classes.map(c => classStats[c].cap.count > 0 ? (classStats[c].cap.sum / classStats[c].cap.count).toFixed(1) : null);
 
     renderClassAvgChart(chartLabels, m1Data, m2Data, m3Data, m4Data, capData);
 
     // Prepare Bar Chart Data (Group averages for all mocks and CAP)
-    const groups = [...new Set(dataToProcess.map(s => s.組別))].filter(g => g).sort();
+    const groups = [...new Set(dataToProcess.flatMap(getStudentGroups))].sort();
     const groupStats = {};
     groups.forEach(g => groupStats[g] = { 
         m1: {sum:0, count:0}, 
@@ -605,37 +623,38 @@ function renderDashboardView() {
     });
 
     dataToProcess.forEach(s => {
-        if (!s.組別) return;
-        if (groupStats[s.組別]) {
+        getStudentGroups(s).forEach(groupName => {
+            const stats = groupStats[groupName];
+            if (!stats) return;
             if (s.一模 && s.一模.總積分) {
-                groupStats[s.組別].m1.sum += parseFloatSafe(s.一模.總積分) || 0;
-                groupStats[s.組別].m1.count++;
+                stats.m1.sum += parseFloatSafe(s.一模.總積分) || 0;
+                stats.m1.count++;
             }
             if (s.二模 && s.二模.總積分) {
-                groupStats[s.組別].m2.sum += parseFloatSafe(s.二模.總積分) || 0;
-                groupStats[s.組別].m2.count++;
+                stats.m2.sum += parseFloatSafe(s.二模.總積分) || 0;
+                stats.m2.count++;
             }
             if (s.三模 && s.三模.總積分) {
-                groupStats[s.組別].m3.sum += parseFloatSafe(s.三模.總積分) || 0;
-                groupStats[s.組別].m3.count++;
+                stats.m3.sum += parseFloatSafe(s.三模.總積分) || 0;
+                stats.m3.count++;
             }
             if (s.四模 && s.四模.總積分) {
-                groupStats[s.組別].m4.sum += parseFloatSafe(s.四模.總積分) || 0;
-                groupStats[s.組別].m4.count++;
+                stats.m4.sum += parseFloatSafe(s.四模.總積分) || 0;
+                stats.m4.count++;
             }
             if (s.會考 && s.會考.總積分) {
-                groupStats[s.組別].cap.sum += parseFloatSafe(s.會考.總積分) || 0;
-                groupStats[s.組別].cap.count++;
+                stats.cap.sum += parseFloatSafe(s.會考.總積分) || 0;
+                stats.cap.count++;
             }
-        }
+        });
     });
 
     const groupLabels = groups;
-    const gm1Data = groups.map(g => groupStats[g].m1.count > 0 ? (groupStats[g].m1.sum / groupStats[g].m1.count).toFixed(1) : 0);
-    const gm2Data = groups.map(g => groupStats[g].m2.count > 0 ? (groupStats[g].m2.sum / groupStats[g].m2.count).toFixed(1) : 0);
-    const gm3Data = groups.map(g => groupStats[g].m3.count > 0 ? (groupStats[g].m3.sum / groupStats[g].m3.count).toFixed(1) : 0);
-    const gm4Data = groups.map(g => groupStats[g].m4.count > 0 ? (groupStats[g].m4.sum / groupStats[g].m4.count).toFixed(1) : 0);
-    const gcapData = groups.map(g => groupStats[g].cap.count > 0 ? (groupStats[g].cap.sum / groupStats[g].cap.count).toFixed(1) : 0);
+    const gm1Data = groups.map(g => groupStats[g].m1.count > 0 ? (groupStats[g].m1.sum / groupStats[g].m1.count).toFixed(1) : null);
+    const gm2Data = groups.map(g => groupStats[g].m2.count > 0 ? (groupStats[g].m2.sum / groupStats[g].m2.count).toFixed(1) : null);
+    const gm3Data = groups.map(g => groupStats[g].m3.count > 0 ? (groupStats[g].m3.sum / groupStats[g].m3.count).toFixed(1) : null);
+    const gm4Data = groups.map(g => groupStats[g].m4.count > 0 ? (groupStats[g].m4.sum / groupStats[g].m4.count).toFixed(1) : null);
+    const gcapData = groups.map(g => groupStats[g].cap.count > 0 ? (groupStats[g].cap.sum / groupStats[g].cap.count).toFixed(1) : null);
 
     renderGroupAvgChart(groupLabels, gm1Data, gm2Data, gm3Data, gm4Data, gcapData);
 }
@@ -1027,7 +1046,7 @@ function renderSubjectBarChart(className) {
     // Filter students
     let students = state.allData;
     if (state.filters.group !== 'all') {
-        students = students.filter(s => s.組別 === state.filters.group);
+        students = students.filter(s => matchesGroup(s, state.filters.group));
     }
     if (className !== 'all') {
         students = students.filter(s => s.班級 === className);
@@ -1177,7 +1196,7 @@ function populateGradesTable(m1, m2, m3, m4, cap) {
 function renderCumulativeView() {
     let allStudents = state.allData;
     if (state.filters.group !== 'all') {
-        allStudents = allStudents.filter(s => s.組別 === state.filters.group);
+        allStudents = allStudents.filter(s => matchesGroup(s, state.filters.group));
     }
     if (state.filters.className !== 'all') {
         allStudents = allStudents.filter(s => s.班級 === state.filters.className);
@@ -1365,9 +1384,9 @@ function renderRankingView() {
         if (!s[examKey] || s[examKey].總積分 === undefined || s[examKey].總積分 === null || s[examKey].總積分 === '') {
             return false;
         }
-        
+
         // 分組篩選
-        if (state.filters.rankingGroup !== 'all' && s.組別 !== state.filters.rankingGroup) {
+        if (!matchesGroup(s, state.filters.rankingGroup)) {
             return false;
         }
         
@@ -1406,7 +1425,7 @@ function renderRankingView() {
     
     // 5. 更新表格標題
     const displayGroup = state.filters.rankingGroup === 'all' ? '全校' : state.filters.rankingGroup;
-    const displayClass = state.filters.rankingClass === 'all' ? '所有班級' : `${state.filters.rankingClass} 班`;
+    const displayClass = state.filters.rankingClass === 'all' ? '所有班級' : formatClassLabel(state.filters.rankingClass);
     const tableTitle = document.getElementById('ranking-table-title');
     if (tableTitle) {
         tableTitle.textContent = `${displayGroup} | ${displayClass} | ${examKey} 排名結果 (共 ${rankedStudents.length} 人)`;
@@ -1435,7 +1454,7 @@ function renderRankingView() {
                 <td style="font-weight: 600;">
                     <a href="#" class="student-link" data-class="${s.班級}" data-seat="${s.座號}">${s.姓名}</a>
                 </td>
-                <td>${s.班級} 班</td>
+                <td>${formatClassLabel(s.班級)}</td>
                 <td>${s.組別 || '-'}</td>
                 <td style="font-weight: bold; color: var(--text-color);">${item.score.toFixed(1)}</td>
                 <td class="${getGradeClass(examData.國)}">${examData.國 || '-'}</td>
