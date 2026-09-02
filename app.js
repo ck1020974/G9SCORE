@@ -288,7 +288,8 @@ function populateStudentSelect(className) {
     elements.studentSelect.innerHTML = '<option value="">請選擇學生...</option>';
     filteredStudents.forEach(student => {
         const option = document.createElement('option');
-        option.value = student.座號;
+        // 座號在高一重新編班後可能重複，使用姓名作為唯一選取值。
+        option.value = student.姓名;
         // Pad seat number with leading zero for UX
         const seatNum = String(student.座號).padStart(2, '0');
         option.textContent = `${seatNum} - ${student.姓名}`;
@@ -472,8 +473,8 @@ function setupEventListeners() {
                 state.filters.className = student.班級;
                 populateStudentSelect(student.班級);
             }
-            elements.studentSelect.value = student.座號;
-            state.filters.studentSeat = student.座號;
+            elements.studentSelect.value = student.姓名;
+            state.filters.studentSeat = student.姓名;
             renderStudentView();
         }
     });
@@ -839,8 +840,8 @@ function renderStudentView() {
     const cls = state.filters.className;
     const seat = state.filters.studentSeat;
     
-    // Use loose equality for seat because JSON might store integers but select returns strings
-    const student = state.allData.find(s => s.班級 == cls && s.座號 == seat);
+    // 高一重新編班後可能有重複座號，因此以班級與姓名選取學生。
+    const student = state.allData.find(s => s.班級 == cls && s.姓名 === seat);
     
     if (!student) {
         resetStudentView();
@@ -1452,7 +1453,7 @@ function renderRankingView() {
             <tr>
                 <td style="font-weight: 700; color: var(--text-color);">${item.rank}</td>
                 <td style="font-weight: 600;">
-                    <a href="#" class="student-link" data-class="${s.班級}" data-seat="${s.座號}">${s.姓名}</a>
+                    <a href="#" class="student-link" data-class="${s.班級}" data-seat="${s.姓名}">${s.姓名}</a>
                 </td>
                 <td>${formatClassLabel(s.班級)}</td>
                 <td>${s.組別 || '-'}</td>
