@@ -506,3 +506,13 @@ select option {
     color: var(--accent-1);
     text-decoration: underline;
 }
+
+[hidden] { display: none !important; }
+.cohort-control { display: grid; gap: 6px; }
+.cohort-control label { font-weight: 700; }
+.cohort-control select { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; background: white; color: var(--text-color); font: inherit; }
+.cohort-control p, .valid-count, .exam-empty { font-size: 0.85rem; color: var(--text-muted); }
+.cohort-badge { display: inline-block; padding: 3px 10px; margin-right: 10px; border-radius: 8px; background: #dbeafe; color: #1d4ed8; font-size: 1rem; vertical-align: middle; }
+.cohort-empty { padding: 20px; margin-bottom: 20px; color: var(--text-muted); }
+.exam-empty { padding: 40px 0; text-align: center; }
+.stat-value { overflow-wrap: anywhere; }

@@ -30,7 +30,7 @@ const elements = {
     // Navigation
     navBtns: document.querySelectorAll('.nav-btn'),
     views: document.querySelectorAll('.view-section'),
-    
+
     // Filters (Moved to respective views)
     studentGroupSelect: document.getElementById('student-group-select'),
     studentClassSelect: document.getElementById('student-class-select'),
@@ -47,10 +47,10 @@ const elements = {
     rankingDashboardActive: document.getElementById('ranking-dashboard-active'),
     rankingTableBody: document.getElementById('ranking-table-body'),
     rankingInfoDisplay: document.getElementById('ranking-info-display'),
-    
+
     // Loading State
     loadingIndicator: document.getElementById('loading-indicator'),
-    
+
     // Dashboard Stats
     totalStudents: document.getElementById('total-students'),
     avgM1: document.getElementById('avg-m1'),
@@ -58,7 +58,7 @@ const elements = {
     avgM3: document.getElementById('avg-m3'),
     avgM4: document.getElementById('avg-m4'),
     avgCAP: document.getElementById('avg-cap'),
-    
+
     // Student View Details
     studentNameDisplay: document.getElementById('student-name-display'),
     studentInfoDisplay: document.getElementById('student-info-display'),
@@ -117,24 +117,24 @@ const doughnutCenterTextPlugin = {
             const txtLine1 = centerConfig.line1 || '';
             const txtLine2 = centerConfig.line2 || '';
             const color = centerConfig.color || '#000';
-            
+
             const centerX = (chart.chartArea.left + chart.chartArea.right) / 2;
             const centerY = (chart.chartArea.top + chart.chartArea.bottom) / 2;
-            
+
             ctx.save();
-            
+
             // Line 1: 5A count
             ctx.font = "bold 15px " + fontStyle;
             ctx.fillStyle = color;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText(txtLine1, centerX, centerY - 10);
-            
+
             // Line 2: percentage
             ctx.font = "normal 12px " + fontStyle;
             ctx.fillStyle = 'rgba(100, 116, 139, 1)';
             ctx.fillText(txtLine2, centerX, centerY + 10);
-            
+
             ctx.restore();
         }
     }
@@ -146,42 +146,11 @@ Chart.register(doughnutCenterTextPlugin);
 
 async function initApp() {
     try {
-        // In local development without a server, fetch might fail with CORS on file://
-        // We'll try to fetch, if it fails, we fall back to a message.
-        const response = await fetch('./scores.json?v=' + new Date().getTime());
-        if (!response.ok) throw new Error('Network response was not ok');
-        
-        const data = await response.json();
-        console.log("Data loaded successfully. Total students:", data.length);
-        console.log("First student record:", data[0]);
-        
-        // Setup state
-        state.allData = data;
-        
-        // Extract unique class list and sort
-        state.classes = [...new Set(data.map(item => item.班級))].sort();
-        
-        // Populate UI
-        populateClassSelect();
-        populateRankingClassSelect();
-        
-        // Hide loading
-        elements.loadingIndicator.classList.add('hidden');
-        
-        // Initial render for Dashboard
-        renderDashboardView();
-        
-        // Setup Event Listeners
+        await initializeCohorts();
         setupEventListeners();
-
     } catch (error) {
-        console.error("Error loading data:", error);
-        elements.loadingIndicator.innerHTML = `
-            <div style="color: var(--danger); text-align: center;">
-                <p>資料載入失敗</p>
-                <p style="font-size: 0.8em; margin-top: 8px;">(提示：使用 Live Server 或本地伺服器開啟以支援資料讀取)</p>
-            </div>
-        `;
+        console.error('資料載入失敗', error.message);
+        elements.loadingIndicator.textContent = '資料載入失敗，請重新整理。';
     }
 }
 
@@ -189,9 +158,7 @@ async function initApp() {
 
 // Helper to safely parse strings to float float
 function parseFloatSafe(val) {
-    if (!val || val === '') return null;
-    const parsed = parseFloat(val);
-    return isNaN(parsed) ? null : parsed;
+    return ScoreData.score(val);
 }
 
 function isExternalCandidate(student) {
@@ -219,8 +186,8 @@ function gradeToNumber(grade) {
     // Remove whitespace and convert to uppercase for robust matching
     const cleanGrade = grade.toString().replace(/\s/g, '').toUpperCase();
     const mapping = {
-        'A++': 7, 'A+': 6, 'A': 5, 
-        'B++': 4, 'B+': 3, 'B': 2, 
+        'A++': 7, 'A+': 6, 'A': 5,
+        'B++': 4, 'B+': 3, 'B': 2,
         'C': 1
     };
     return mapping[cleanGrade] || 0;
@@ -244,9 +211,9 @@ function populateClassSelect() {
         classes = Array.from(classesInGroup).sort();
     }
 
-    const optionsHTML = '<option value="all">所有班級</option>' + 
+    const optionsHTML = '<option value="all">所有班級</option>' +
         classes.map(c => `<option value="${c}">${formatClassLabel(c)}</option>`).join('');
-    
+
     if(elements.studentClassSelect) elements.studentClassSelect.innerHTML = optionsHTML;
     if(elements.subjectClassSelect) elements.subjectClassSelect.innerHTML = optionsHTML;
     if(elements.cumulativeClassSelect) elements.cumulativeClassSelect.innerHTML = optionsHTML;
@@ -254,22 +221,22 @@ function populateClassSelect() {
 
 function populateRankingClassSelect() {
     if (!elements.rankingClassSelect) return;
-    
+
     let classes = state.classes;
     if (state.filters.rankingGroup !== 'all') {
         const classesInGroup = new Set(state.allData.filter(s => matchesGroup(s, state.filters.rankingGroup)).map(s => s.班級));
         classes = Array.from(classesInGroup).sort();
     }
 
-    const optionsHTML = '<option value="all">所有班級</option>' + 
+    const optionsHTML = '<option value="all">所有班級</option>' +
         classes.map(c => `<option value="${c}">${formatClassLabel(c)}</option>`).join('');
-    
+
     elements.rankingClassSelect.innerHTML = optionsHTML;
 }
 
 function populateStudentSelect(className) {
     if (!elements.studentSelect) return;
-    
+
     let students = state.allData;
     if (state.filters.group !== 'all') {
         students = students.filter(s => matchesGroup(s, state.filters.group));
@@ -289,7 +256,7 @@ function populateStudentSelect(className) {
     filteredStudents.forEach(student => {
         const option = document.createElement('option');
         // 座號在高一重新編班後可能重複，使用姓名作為唯一選取值。
-        option.value = student.姓名;
+        option.value = student.id;
         // Pad seat number with leading zero for UX
         const seatNum = String(student.座號).padStart(2, '0');
         option.textContent = `${seatNum} - ${student.姓名}`;
@@ -300,38 +267,38 @@ function populateStudentSelect(className) {
 function updateGlobalGroup(groupValue) {
     state.filters.group = groupValue;
     populateClassSelect();
-    
+
     state.filters.className = 'all';
-    
+
     // 同步所有的 Group Selects (排除 rankingGroupSelect)
     if(elements.studentGroupSelect) elements.studentGroupSelect.value = groupValue;
     if(elements.subjectGroupSelect) elements.subjectGroupSelect.value = groupValue;
     if(elements.cumulativeGroupSelect) elements.cumulativeGroupSelect.value = groupValue;
-    
+
     // 同步所有的 Class Selects 到 'all' (排除 rankingClassSelect)
     if(elements.studentClassSelect) elements.studentClassSelect.value = 'all';
     if(elements.subjectClassSelect) elements.subjectClassSelect.value = 'all';
     if(elements.cumulativeClassSelect) elements.cumulativeClassSelect.value = 'all';
-    
+
     populateStudentSelect('all');
     resetStudentView();
-    
+
     triggerViewRender();
 }
 
 function updateGlobalClass(classValue) {
     state.filters.className = classValue;
-    
+
     // 同步所有的 Class Selects (排除 rankingClassSelect)
     if(elements.studentClassSelect) elements.studentClassSelect.value = classValue;
     if(elements.subjectClassSelect) elements.subjectClassSelect.value = classValue;
     if(elements.cumulativeClassSelect) elements.cumulativeClassSelect.value = classValue;
-    
+
     if (elements.studentSelect) {
         populateStudentSelect(classValue);
         resetStudentView();
     }
-    
+
     triggerViewRender();
 }
 
@@ -350,14 +317,14 @@ function setupEventListeners() {
             // Update active states
             elements.navBtns.forEach(b => b.classList.remove('active'));
             e.currentTarget.classList.add('active');
-            
+
             // Switch views
             const viewId = e.currentTarget.dataset.view;
             state.currentView = viewId;
-            
+
             elements.views.forEach(v => v.classList.remove('active'));
             document.getElementById(`view-${viewId}`).classList.add('active');
-            
+
             // Auto render specific logic per view
             if (viewId === 'subject') {
                 renderSubjectBarChart(state.filters.className);
@@ -366,7 +333,7 @@ function setupEventListeners() {
                     renderStudentView();
                 }
             }
-            
+
             // Ensure chart resizes correctly when container becomes visible
             if (state.charts.progress) state.charts.progress.resize();
             if (state.charts.radar) state.charts.radar.resize();
@@ -446,7 +413,7 @@ function setupEventListeners() {
             resetStudentView();
             return;
         }
-        
+
         state.filters.studentSeat = seat;
         renderStudentView();
     });
@@ -455,7 +422,7 @@ function setupEventListeners() {
     elements.studentSearch.addEventListener('input', (e) => {
         const term = e.target.value.toLowerCase().trim();
         if (term.length === 0) return;
-        
+
         // Find first matching student across all data
         const termLooseMatch = parseInt(term, 10);
         const student = state.allData.find(s =>
@@ -466,6 +433,7 @@ function setupEventListeners() {
         );
 
         if (student) {
+            if (state.filters.group !== 'all') updateGlobalGroup('all');
             // Auto update filters to match found student
             if (elements.studentClassSelect && elements.studentClassSelect.value !== student.班級) {
                 elements.studentClassSelect.value = student.班級;
@@ -473,8 +441,8 @@ function setupEventListeners() {
                 state.filters.className = student.班級;
                 populateStudentSelect(student.班級);
             }
-            elements.studentSelect.value = student.姓名;
-            state.filters.studentSeat = student.姓名;
+            elements.studentSelect.value = student.id;
+            state.filters.studentSeat = student.id;
             renderStudentView();
         }
     });
@@ -494,20 +462,21 @@ function setupEventListeners() {
 }
 
 function navigateToStudentProfile(cls, seat) {
+    if (state.filters.group !== 'all') updateGlobalGroup('all');
     // 1. 更新狀態
     state.currentView = 'student';
     state.filters.className = cls;
     state.filters.studentSeat = seat;
-    
+
     // 2. 同步下拉選單 (分組/班級，排除已獨立的 ranking)
     if(elements.studentClassSelect) elements.studentClassSelect.value = cls;
     if(elements.subjectClassSelect) elements.subjectClassSelect.value = cls;
     if(elements.cumulativeClassSelect) elements.cumulativeClassSelect.value = cls;
-    
+
     // 3. 填入學生下拉選單並選中
     populateStudentSelect(cls);
     if(elements.studentSelect) elements.studentSelect.value = seat;
-    
+
     // 4. 更新 Sidebar 按鈕選中狀態
     elements.navBtns.forEach(btn => {
         if (btn.dataset.view === 'student') {
@@ -516,7 +485,7 @@ function navigateToStudentProfile(cls, seat) {
             btn.classList.remove('active');
         }
     });
-    
+
     // 5. 切換視圖 Section
     elements.views.forEach(v => {
         if (v.id === 'view-student') {
@@ -525,10 +494,10 @@ function navigateToStudentProfile(cls, seat) {
             v.classList.remove('active');
         }
     });
-    
+
     // 6. 渲染個人表現
     renderStudentView();
-    
+
     // 7. 觸發圖表 resize 確保正常繪製
     if (state.charts.progress) state.charts.progress.resize();
     if (state.charts.radar) state.charts.radar.resize();
@@ -538,112 +507,103 @@ function navigateToStudentProfile(cls, seat) {
 
 function renderDashboardView() {
     let dataToProcess = state.allData;
-    
-    // Although Dashboard is 'Overall', if a class is selected, we might want to filter, 
+
+    // Although Dashboard is 'Overall', if a class is selected, we might want to filter,
     // but the design says "班級整體表現總覽". Let's show all classes by default or filter if requested.
     // For the bar chart, showing all classes is usually better.
-    
+
     // Calculate global stats
     const totalCount = dataToProcess.length;
-    
-    // Averages
-    let m1Sum = 0, m1Count = 0;
-    let m2Sum = 0, m2Count = 0;
-    let m3Sum = 0, m3Count = 0;
-    let m4Sum = 0, m4Count = 0;
-    let capSum = 0, capCount = 0;
 
-    dataToProcess.forEach(s => {
-        if (s.一模 && s.一模.總積分) { m1Sum += parseFloatSafe(s.一模.總積分) || 0; m1Count++; }
-        if (s.二模 && s.二模.總積分) { m2Sum += parseFloatSafe(s.二模.總積分) || 0; m2Count++; }
-        if (s.三模 && s.三模.總積分) { m3Sum += parseFloatSafe(s.三模.總積分) || 0; m3Count++; }
-        if (s.四模 && s.四模.總積分) { m4Sum += parseFloatSafe(s.四模.總積分) || 0; m4Count++; }
-        if (s.會考 && s.會考.總積分) { capSum += parseFloatSafe(s.會考.總積分) || 0; capCount++; }
+    elements.totalStudents.textContent = totalCount;
+    const statElements = [elements.avgM1, elements.avgM2, elements.avgM3, elements.avgM4, elements.avgCAP];
+    ScoreData.exams.forEach((exam, i) => {
+        const stats = ScoreData.summary(dataToProcess, exam);
+        statElements[i].textContent = stats.average === null ? '尚無資料' : stats.average.toFixed(1);
+        let count = statElements[i].parentElement.querySelector('.valid-count');
+        if (!count) { count = document.createElement('p'); count.className = 'valid-count'; statElements[i].after(count); }
+        count.textContent = '有效成績 ' + stats.count + ' 人';
     });
 
-    if (elements.totalStudents) elements.totalStudents.textContent = totalCount;
-    if (elements.avgM1) elements.avgM1.textContent = m1Count ? (m1Sum / m1Count).toFixed(1) : '--';
-    if (elements.avgM2) elements.avgM2.textContent = m2Count ? (m2Sum / m2Count).toFixed(1) : '--';
-    if (elements.avgM3) elements.avgM3.textContent = m3Count ? (m3Sum / m3Count).toFixed(1) : '--';
-    if (elements.avgM4) elements.avgM4.textContent = m4Count ? (m4Sum / m4Count).toFixed(1) : '--';
-    if (elements.avgCAP) elements.avgCAP.textContent = capCount ? (capSum / capCount).toFixed(1) : '--';
+    // 高一重新編班不列入班級比較；學生仍計入總覽與最終直升統計。
+    const dashboardClasses = state.classes.filter(c => !(state.cohort.display?.hiddenDashboardClasses || []).includes(String(c)));
 
     // Prepare Bar Chart Data (Class averages for all mocks and CAP)
     const classStats = {};
-    state.classes.forEach(c => classStats[c] = { 
-        m1: {sum:0, count:0}, 
-        m2: {sum:0, count:0}, 
-        m3: {sum:0, count:0}, 
+    dashboardClasses.forEach(c => classStats[c] = {
+        m1: {sum:0, count:0},
+        m2: {sum:0, count:0},
+        m3: {sum:0, count:0},
         m4: {sum:0, count:0},
-        cap: {sum:0, count:0} 
+        cap: {sum:0, count:0}
     });
 
     dataToProcess.forEach(s => {
         if (classStats[s.班級]) {
-            if (s.一模 && s.一模.總積分) {
+            if (s.一模 && parseFloatSafe(s.一模.總積分) !== null) {
                 classStats[s.班級].m1.sum += parseFloatSafe(s.一模.總積分) || 0;
                 classStats[s.班級].m1.count++;
             }
-            if (s.二模 && s.二模.總積分) {
+            if (s.二模 && parseFloatSafe(s.二模.總積分) !== null) {
                 classStats[s.班級].m2.sum += parseFloatSafe(s.二模.總積分) || 0;
                 classStats[s.班級].m2.count++;
             }
-            if (s.三模 && s.三模.總積分) {
+            if (s.三模 && parseFloatSafe(s.三模.總積分) !== null) {
                 classStats[s.班級].m3.sum += parseFloatSafe(s.三模.總積分) || 0;
                 classStats[s.班級].m3.count++;
             }
-            if (s.四模 && s.四模.總積分) {
+            if (s.四模 && parseFloatSafe(s.四模.總積分) !== null) {
                 classStats[s.班級].m4.sum += parseFloatSafe(s.四模.總積分) || 0;
                 classStats[s.班級].m4.count++;
             }
-            if (s.會考 && s.會考.總積分) {
+            if (s.會考 && parseFloatSafe(s.會考.總積分) !== null) {
                 classStats[s.班級].cap.sum += parseFloatSafe(s.會考.總積分) || 0;
                 classStats[s.班級].cap.count++;
             }
         }
     });
 
-    const chartLabels = state.classes.map(formatClassLabel);
-    const m1Data = state.classes.map(c => classStats[c].m1.count > 0 ? (classStats[c].m1.sum / classStats[c].m1.count).toFixed(1) : null);
-    const m2Data = state.classes.map(c => classStats[c].m2.count > 0 ? (classStats[c].m2.sum / classStats[c].m2.count).toFixed(1) : null);
-    const m3Data = state.classes.map(c => classStats[c].m3.count > 0 ? (classStats[c].m3.sum / classStats[c].m3.count).toFixed(1) : null);
-    const m4Data = state.classes.map(c => classStats[c].m4.count > 0 ? (classStats[c].m4.sum / classStats[c].m4.count).toFixed(1) : null);
-    const capData = state.classes.map(c => classStats[c].cap.count > 0 ? (classStats[c].cap.sum / classStats[c].cap.count).toFixed(1) : null);
+    const chartLabels = dashboardClasses.map(formatClassLabel);
+    const m1Data = dashboardClasses.map(c => classStats[c].m1.count > 0 ? (classStats[c].m1.sum / classStats[c].m1.count).toFixed(1) : null);
+    const m2Data = dashboardClasses.map(c => classStats[c].m2.count > 0 ? (classStats[c].m2.sum / classStats[c].m2.count).toFixed(1) : null);
+    const m3Data = dashboardClasses.map(c => classStats[c].m3.count > 0 ? (classStats[c].m3.sum / classStats[c].m3.count).toFixed(1) : null);
+    const m4Data = dashboardClasses.map(c => classStats[c].m4.count > 0 ? (classStats[c].m4.sum / classStats[c].m4.count).toFixed(1) : null);
+    const capData = dashboardClasses.map(c => classStats[c].cap.count > 0 ? (classStats[c].cap.sum / classStats[c].cap.count).toFixed(1) : null);
 
     renderClassAvgChart(chartLabels, m1Data, m2Data, m3Data, m4Data, capData);
 
     // Prepare Bar Chart Data (Group averages for all mocks and CAP)
-    const groups = [...new Set(dataToProcess.flatMap(getStudentGroups))].sort();
+    const groups = [...new Set(dataToProcess.flatMap(getStudentGroups))].filter(g => !(state.cohort.display?.hiddenDashboardGroups || []).includes(g)).sort();
     const groupStats = {};
-    groups.forEach(g => groupStats[g] = { 
-        m1: {sum:0, count:0}, 
-        m2: {sum:0, count:0}, 
-        m3: {sum:0, count:0}, 
+    groups.forEach(g => groupStats[g] = {
+        m1: {sum:0, count:0},
+        m2: {sum:0, count:0},
+        m3: {sum:0, count:0},
         m4: {sum:0, count:0},
-        cap: {sum:0, count:0} 
+        cap: {sum:0, count:0}
     });
 
     dataToProcess.forEach(s => {
         getStudentGroups(s).forEach(groupName => {
             const stats = groupStats[groupName];
             if (!stats) return;
-            if (s.一模 && s.一模.總積分) {
+            if (s.一模 && parseFloatSafe(s.一模.總積分) !== null) {
                 stats.m1.sum += parseFloatSafe(s.一模.總積分) || 0;
                 stats.m1.count++;
             }
-            if (s.二模 && s.二模.總積分) {
+            if (s.二模 && parseFloatSafe(s.二模.總積分) !== null) {
                 stats.m2.sum += parseFloatSafe(s.二模.總積分) || 0;
                 stats.m2.count++;
             }
-            if (s.三模 && s.三模.總積分) {
+            if (s.三模 && parseFloatSafe(s.三模.總積分) !== null) {
                 stats.m3.sum += parseFloatSafe(s.三模.總積分) || 0;
                 stats.m3.count++;
             }
-            if (s.四模 && s.四模.總積分) {
+            if (s.四模 && parseFloatSafe(s.四模.總積分) !== null) {
                 stats.m4.sum += parseFloatSafe(s.四模.總積分) || 0;
                 stats.m4.count++;
             }
-            if (s.會考 && s.會考.總積分) {
+            if (s.會考 && parseFloatSafe(s.會考.總積分) !== null) {
                 stats.cap.sum += parseFloatSafe(s.會考.總積分) || 0;
                 stats.cap.count++;
             }
@@ -662,12 +622,12 @@ function renderDashboardView() {
 
 function renderGroupAvgChart(labels, m1, m2, m3, m4, cap) {
     const ctx = document.getElementById('groupAvgChart').getContext('2d');
-    
+
     if (state.charts.groupAvg) {
         state.charts.groupAvg.destroy();
     }
 
-    state.charts.groupAvg = new Chart(ctx, {
+    state.charts.groupAvg = createExamChart(ctx, {
         type: 'bar',
         data: {
             labels: labels,
@@ -728,7 +688,7 @@ function renderGroupAvgChart(labels, m1, m2, m3, m4, cap) {
                 }
             },
             plugins: {
-                legend: { 
+                legend: {
                     position: 'top',
                     labels: { color: colors.text }
                 }
@@ -743,12 +703,12 @@ function renderGroupAvgChart(labels, m1, m2, m3, m4, cap) {
 
 function renderClassAvgChart(labels, m1, m2, m3, m4, cap) {
     const ctx = document.getElementById('classAvgChart').getContext('2d');
-    
+
     if (state.charts.classAvg) {
         state.charts.classAvg.destroy();
     }
 
-    state.charts.classAvg = new Chart(ctx, {
+    state.charts.classAvg = createExamChart(ctx, {
         type: 'bar',
         data: {
             labels: labels,
@@ -809,7 +769,7 @@ function renderClassAvgChart(labels, m1, m2, m3, m4, cap) {
                 }
             },
             plugins: {
-                legend: { 
+                legend: {
                     position: 'top',
                     labels: { color: colors.text }
                 }
@@ -839,10 +799,10 @@ function resetStudentView() {
 function renderStudentView() {
     const cls = state.filters.className;
     const seat = state.filters.studentSeat;
-    
+
     // 高一重新編班後可能有重複座號，因此以班級與姓名選取學生。
-    const student = state.allData.find(s => s.班級 == cls && s.姓名 === seat);
-    
+    const student = state.allData.find(s => s.班級 == cls && s.id === seat);
+
     if (!student) {
         resetStudentView();
         return;
@@ -851,7 +811,7 @@ function renderStudentView() {
     // Toggle states
     elements.studentDashboardPlaceholder.classList.add('hidden');
     elements.studentDashboardActive.classList.remove('hidden');
-    
+
     // Update Header
     elements.studentNameDisplay.textContent = student.姓名;
     elements.studentInfoDisplay.textContent = `班級: ${student.班級} | 座號: ${String(student.座號).padStart(2, '0')}`;
@@ -865,11 +825,11 @@ function renderStudentView() {
 
     // 1. Progress Chart (Line)
     const progressData = [
-        parseFloatSafe(m1.總積分) || null,
-        parseFloatSafe(m2.總積分) || null,
-        parseFloatSafe(m3.總積分) || null,
-        parseFloatSafe(m4.總積分) || null,
-        parseFloatSafe(cap.總積分) || null
+        parseFloatSafe(m1.總積分),
+        parseFloatSafe(m2.總積分),
+        parseFloatSafe(m3.總積分),
+        parseFloatSafe(m4.總積分),
+        parseFloatSafe(cap.總積分)
     ];
     renderProgressChart(['一模', '二模', '三模', '四模', '會考'], progressData);
 
@@ -909,7 +869,7 @@ function renderStudentView() {
 
 function renderProgressChart(labels, data) {
     const ctx = document.getElementById('progressChart').getContext('2d');
-    
+
     if (state.charts.progress) {
         state.charts.progress.destroy();
     }
@@ -919,7 +879,7 @@ function renderProgressChart(labels, data) {
     gradient.addColorStop(0, colors.accent2Bg);
     gradient.addColorStop(1, 'rgba(236, 72, 153, 0)');
 
-    state.charts.progress = new Chart(ctx, {
+    state.charts.progress = createExamChart(ctx, {
         type: 'line',
         data: {
             labels: labels,
@@ -960,12 +920,12 @@ function renderProgressChart(labels, data) {
 
 function renderRadarChart(labels, data, datasetLabel) {
     const ctx = document.getElementById('radarChart').getContext('2d');
-    
+
     if (state.charts.radar) {
         state.charts.radar.destroy();
     }
 
-    state.charts.radar = new Chart(ctx, {
+    state.charts.radar = createExamChart(ctx, {
         type: 'radar',
         data: {
             labels: labels,
@@ -1001,7 +961,7 @@ function renderRadarChart(labels, data, datasetLabel) {
                 }
             },
             plugins: {
-                legend: { 
+                legend: {
                     labels: { color: colors.text }
                 },
                 tooltip: {
@@ -1010,7 +970,7 @@ function renderRadarChart(labels, data, datasetLabel) {
                             // Reverse map number to grade for tooltip
                             const val = context.raw;
                             const reverseMap = {
-                                7: 'A++', 6: 'A+', 5: 'A', 
+                                7: 'A++', 6: 'A+', 5: 'A',
                                 4: 'B++', 3: 'B+', 2: 'B', 1: 'C'
                             };
                             return ` ${context.dataset.label}: ${reverseMap[val] || '無'}`;
@@ -1024,7 +984,7 @@ function renderRadarChart(labels, data, datasetLabel) {
 
 function renderSubjectBarChart(className) {
     if (!elements.subjectDashboardActive || !document.getElementById('subjectBarChart')) return;
-    
+
     if (!className) {
         elements.subjectDashboardPlaceholder.classList.remove('hidden');
         elements.subjectDashboardActive.classList.add('hidden');
@@ -1035,11 +995,11 @@ function renderSubjectBarChart(className) {
     // Toggle containers
     elements.subjectDashboardPlaceholder.classList.add('hidden');
     elements.subjectDashboardActive.classList.remove('hidden');
-    
+
     // Update headers
     const subjectName = elements.subjectFilter.options[elements.subjectFilter.selectedIndex].text;
     const subjectKey = elements.subjectFilter.value; // e.g., '國', '英'
-    
+
     const displayClassName = className === 'all' ? '所有班級 (全校)' : `${className} 班`;
     if(elements.subjectInfoDisplay) elements.subjectInfoDisplay.textContent = ``;
     if(elements.subjectChartTitle) elements.subjectChartTitle.textContent = `${displayClassName} ${subjectName}科 模考與會考比較`;
@@ -1053,8 +1013,15 @@ function renderSubjectBarChart(className) {
         students = students.filter(s => s.班級 === className);
     }
 
+    if (!students.length) {
+        elements.subjectDashboardPlaceholder.classList.remove('hidden');
+        elements.subjectDashboardPlaceholder.querySelector('p').textContent = '目前範圍尚無學生資料';
+        elements.subjectDashboardActive.classList.add('hidden');
+        return;
+    }
+
     const gradesOrder = ['A++', 'A+', 'A', 'B++', 'B+', 'B', 'C'];
-    
+
     // Helper to count grades for a specific exam
     const countGrades = (examKey) => {
         const counts = { 'A++': 0, 'A+': 0, 'A': 0, 'B++': 0, 'B+': 0, 'B': 0, 'C': 0 };
@@ -1080,7 +1047,7 @@ function renderSubjectBarChart(className) {
         state.charts.subjectBar.destroy();
     }
 
-    state.charts.subjectBar = new Chart(ctx, {
+    state.charts.subjectBar = createExamChart(ctx, {
         type: 'bar',
         data: {
             labels: gradesOrder,
@@ -1146,7 +1113,7 @@ function renderSubjectBarChart(className) {
                 }
             },
             plugins: {
-                legend: { 
+                legend: {
                     position: 'top',
                     labels: { color: colors.text }
                 },
@@ -1163,21 +1130,21 @@ function renderSubjectBarChart(className) {
 }
 
 function processTableRow(examName, examData) {
-    if (!examData || Object.keys(examData).length === 0 || !examData.總積分) {
+    if (!examData || Object.keys(examData).length === 0 || parseFloatSafe(examData.總積分) === null) {
         return `<tr><td style="color: var(--text-muted);">${examName}</td><td colspan="7" style="color: var(--text-muted);">無資料</td></tr>`;
     }
-    
+
     const d = examData;
     return `
         <tr>
             <td style="font-weight: 600; color: var(--text-muted);">${examName}</td>
-            <td style="font-weight: bold; color: var(--text-color);">${d.總積分 || '-'}</td>
+            <td style="font-weight: bold; color: var(--text-color);">${d.總積分 ?? '-'}</td>
             <td class="${getGradeClass(d.國)}">${d.國 || '-'}</td>
             <td class="${getGradeClass(d.英)}">${d.英 || '-'}</td>
             <td class="${getGradeClass(d.數)}">${d.數 || '-'}</td>
             <td class="${getGradeClass(d.社)}">${d.社 || '-'}</td>
             <td class="${getGradeClass(d.自)}">${d.自 || '-'}</td>
-            <td style="color: var(--warning); font-weight: 600;">${d.作 || '-'}</td>
+            <td style="color: var(--warning); font-weight: 600;">${d.作 ?? '-'}</td>
         </tr>
     `;
 }
@@ -1203,16 +1170,16 @@ function renderCumulativeView() {
         allStudents = allStudents.filter(s => s.班級 === state.filters.className);
     }
     const exams = ['一模', '二模', '三模', '四模', '會考'];
-    
+
     // Calculate data for Pie Charts
     const fiveAStats = [];
     const chartData = exams.map(exam => {
         let over30 = 0, between25and29 = 0, between10and24 = 0, under10 = 0;
         let fiveACount = 0;
         let validCount = 0;
-        
+
         allStudents.forEach(s => {
-            if (s[exam] && s[exam].總積分) {
+            if (s[exam] && parseFloatSafe(s[exam].總積分) !== null) {
                 const score = parseFloatSafe(s[exam].總積分);
                 if (score !== null) {
                     validCount++;
@@ -1220,7 +1187,7 @@ function renderCumulativeView() {
                     else if (score >= 25) between25and29++;
                     else if (score >= 10) between10and24++;
                     else under10++;
-                    
+
                     // 5A 判定 (國、英、數、社、自皆達 A 以上)
                     const examData = s[exam];
                     if (examData.國 && examData.英 && examData.數 && examData.社 && examData.自) {
@@ -1232,13 +1199,14 @@ function renderCumulativeView() {
                 }
             }
         });
-        
+
         const percent = validCount > 0 ? ((fiveACount / validCount) * 100).toFixed(1) : '0.0';
         fiveAStats.push({
             count: fiveACount,
-            percentage: percent
+            percentage: percent,
+            validCount
         });
-        
+
         return [over30, between25and29, between10and24, under10];
     });
 
@@ -1253,19 +1221,31 @@ function renderCumulativeCharts(chartData, fiveAStats) {
         '#cbd5e1',          // Gray for 10-24
         '#ef4444'           // Red for <10
     ];
-    
+
     ['M1', 'M2', 'M3', 'M4', 'CAP'].forEach((exam, index) => {
         const canvas = document.getElementById(`pieChart${exam}`);
         if(!canvas) return;
         const ctx = canvas.getContext('2d');
-        
+
         if (state.charts[`pie${exam}`]) {
             state.charts[`pie${exam}`].destroy();
         }
 
         const stats = fiveAStats[index];
 
-        state.charts[`pie${exam}`] = new Chart(ctx, {
+        const card = canvas.closest('.chart-wrapper');
+        let notice = card.querySelector('.exam-empty');
+        if (!notice) {
+            notice = document.createElement('p');
+            notice.className = 'exam-empty';
+            notice.textContent = '尚無資料';
+            card.append(notice);
+        }
+        canvas.parentElement.hidden = !stats.validCount;
+        notice.hidden = stats.validCount > 0;
+        if (!stats.validCount) { state.charts[`pie${exam}`] = null; return; }
+
+        state.charts[`pie${exam}`] = createExamChart(ctx, {
             type: 'doughnut',
             data: {
                 labels: labels,
@@ -1282,7 +1262,7 @@ function renderCumulativeCharts(chartData, fiveAStats) {
                 maintainAspectRatio: false,
                 cutout: '60%',
                 plugins: {
-                    legend: { 
+                    legend: {
                         display: false
                     },
                     tooltip: {
@@ -1310,63 +1290,63 @@ function renderCumulativeCharts(chartData, fiveAStats) {
 
 function compareStudents(a, b, examKey) {
     // 降序排序: 若 b 的值優於 a 的值，應回傳正數
-    
+
     // 先比總積分
     if (b.score !== a.score) {
         return b.score - a.score;
     }
-    
+
     const examA = a.student[examKey];
     const examB = b.student[examKey];
-    
+
     // 1. 比寫作 (作)
     const essayA = parseFloatSafe(examA.作) || 0;
     const essayB = parseFloatSafe(examB.作) || 0;
     if (essayB !== essayA) {
         return essayB - essayA;
     }
-    
+
     // 2. 比國文
     const chiA = gradeToNumber(examA.國);
     const chiB = gradeToNumber(examB.國);
     if (chiB !== chiA) {
         return chiB - chiA;
     }
-    
+
     // 3. 比英文
     const engA = gradeToNumber(examA.英);
     const engB = gradeToNumber(examB.英);
     if (engB !== engA) {
         return engB - engA;
     }
-    
+
     // 4. 比數學
     const mathA = gradeToNumber(examA.數);
     const mathB = gradeToNumber(examB.數);
     if (mathB !== mathA) {
         return mathB - mathA;
     }
-    
+
     // 5. 比社會
     const socA = gradeToNumber(examA.社);
     const socB = gradeToNumber(examB.社);
     if (socB !== socA) {
         return socB - socA;
     }
-    
+
     // 6. 比自然
     const sciA = gradeToNumber(examA.自);
     const sciB = gradeToNumber(examB.自);
     if (sciB !== sciA) {
         return sciB - sciA;
     }
-    
+
     return 0;
 }
 
 function renderRankingView() {
     const examKey = state.filters.rankingExam;
-    
+
     // 1. 檢查前置條件
     if (!examKey) {
         if (elements.rankingDashboardPlaceholder) elements.rankingDashboardPlaceholder.classList.remove('hidden');
@@ -1374,11 +1354,11 @@ function renderRankingView() {
         if (elements.rankingInfoDisplay) elements.rankingInfoDisplay.textContent = '請選擇考試項目以載入排名計分板';
         return;
     }
-    
+
     if (elements.rankingDashboardPlaceholder) elements.rankingDashboardPlaceholder.classList.add('hidden');
     if (elements.rankingDashboardActive) elements.rankingDashboardActive.classList.remove('hidden');
     if (elements.rankingInfoDisplay) elements.rankingInfoDisplay.textContent = '';
-    
+
     // 2. 篩選資料
     let filteredStudents = state.allData.filter(s => {
         // 必須在該次考試有總積分資料
@@ -1390,15 +1370,15 @@ function renderRankingView() {
         if (!matchesGroup(s, state.filters.rankingGroup)) {
             return false;
         }
-        
+
         // 班級篩選
         if (state.filters.rankingClass !== 'all' && s.班級 !== state.filters.rankingClass) {
             return false;
         }
-        
+
         return true;
     });
-    
+
     // 3. 排序資料 (依總積分降序排序，若相同則依序比作、國、英、數、社、自)
     const sortedItems = filteredStudents.map(s => {
         return {
@@ -1406,7 +1386,7 @@ function renderRankingView() {
             score: parseFloatSafe(s[examKey].總積分) || 0
         };
     }).sort((a, b) => compareStudents(a, b, examKey));
-    
+
     // 4. 計算名次 (標準競賽平局排名，但以同分判優破局：只有當全部科目均完全平手時才並列名次)
     let currentRank = 1;
     const rankedStudents = [];
@@ -1423,7 +1403,7 @@ function renderRankingView() {
             rank: currentRank
         });
     }
-    
+
     // 5. 更新表格標題
     const displayGroup = state.filters.rankingGroup === 'all' ? '全校' : state.filters.rankingGroup;
     const displayClass = state.filters.rankingClass === 'all' ? '所有班級' : formatClassLabel(state.filters.rankingClass);
@@ -1431,7 +1411,7 @@ function renderRankingView() {
     if (tableTitle) {
         tableTitle.textContent = `${displayGroup} | ${displayClass} | ${examKey} 排名結果 (共 ${rankedStudents.length} 人)`;
     }
-    
+
     // 6. 渲染表格
     if (rankedStudents.length === 0) {
         elements.rankingTableBody.innerHTML = `
@@ -1443,17 +1423,17 @@ function renderRankingView() {
         `;
         return;
     }
-    
+
     let html = '';
     rankedStudents.forEach(item => {
         const s = item.student;
         const examData = s[examKey];
-        
+
         html += `
             <tr>
                 <td style="font-weight: 700; color: var(--text-color);">${item.rank}</td>
                 <td style="font-weight: 600;">
-                    <a href="#" class="student-link" data-class="${s.班級}" data-seat="${s.姓名}">${s.姓名}</a>
+                    <a href="#" class="student-link" data-class="${s.班級}" data-seat="${s.id}">${s.姓名}</a>
                 </td>
                 <td>${formatClassLabel(s.班級)}</td>
                 <td>${s.組別 || '-'}</td>

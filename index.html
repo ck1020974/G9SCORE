@@ -8,7 +8,7 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+TC:wght@400;500;700;900&display=swap"
         rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=4">
+    <link rel="stylesheet" href="style.css?v=5">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
@@ -28,6 +28,11 @@
                 <p>Mock Exam Analytics</p>
             </div>
 
+            <div class="cohort-control">
+                <label for="cohort-select">選擇級別</label>
+                <select id="cohort-select" aria-describedby="cohort-status"></select>
+                <p id="cohort-status" role="status"></p>
+            </div>
             <nav class="nav-menu">
                 <button class="nav-btn active" data-view="dashboard">
                     <span class="icon">📊</span> 班級總覽
@@ -56,11 +61,12 @@
 
         <!-- Main Content Area -->
         <main class="main-content">
+            <div id="cohort-empty" class="glass-panel cohort-empty" role="status" hidden>本級尚未匯入資料，匯入後即可查看各項分析。</div>
             <!-- Dashboard View -->
             <section id="view-dashboard" class="view-section active">
                 <header class="section-header">
                     <h1>班級成績分析</h1>
-                    <p class="subtitle">最終直升生已依高一班級編入 1001、1002；外考生資料僅提供會考成績。</p>
+                    <p class="subtitle">班級比較顯示九年級班級；最終直升生納入班群統計。外考生資料僅提供會考成績。</p>
                 </header>
 
                 <div class="stats-grid">
@@ -181,7 +187,7 @@
 
                     <div class="charts-grid">
                         <div class="chart-wrapper glass-panel">
-                            <h3>四次模考總積分變化</h3>
+                            <h3>模考與會考總積分變化</h3>
                             <div class="canvas-container" style="height: 250px;">
                                 <canvas id="progressChart"></canvas>
                             </div>
@@ -407,7 +413,9 @@
         </main>
     </div>
 
-    <script src="app.js?v=15"></script>
+    <script src="data-model.js?v=2"></script>
+    <script src="cohorts.js?v=2"></script>
+    <script src="app.js?v=18"></script>
 </body>
 
 </html>

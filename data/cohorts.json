@@ -1,0 +1,15 @@
+{
+  "defaultCohort": "115",
+  "cohorts": [
+    {
+      "id": "114",
+      "label": "114級",
+      "file": "./data/114.json"
+    },
+    {
+      "id": "115",
+      "label": "115級",
+      "file": "./data/115.json"
+    }
+  ]
+}
