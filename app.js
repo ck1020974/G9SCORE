@@ -321,6 +321,7 @@ function setupEventListeners() {
             // Switch views
             const viewId = e.currentTarget.dataset.view;
             state.currentView = viewId;
+            updateComparisonMode();
 
             elements.views.forEach(v => v.classList.remove('active'));
             document.getElementById(`view-${viewId}`).classList.add('active');
@@ -348,6 +349,8 @@ function setupEventListeners() {
                 renderCumulativeView();
             } else if (viewId === 'ranking') {
                 renderRankingView();
+            } else if (viewId === 'comparison') {
+                renderComparisonView();
             }
         });
     });
@@ -515,14 +518,12 @@ function renderDashboardView() {
     // Calculate global stats
     const totalCount = dataToProcess.length;
 
-    elements.totalStudents.textContent = totalCount;
+    elements.totalStudents.textContent = `（${totalCount} 人）`;
     const statElements = [elements.avgM1, elements.avgM2, elements.avgM3, elements.avgM4, elements.avgCAP];
     ScoreData.exams.forEach((exam, i) => {
         const stats = ScoreData.summary(dataToProcess, exam);
         statElements[i].textContent = stats.average === null ? '尚無資料' : stats.average.toFixed(1);
-        let count = statElements[i].parentElement.querySelector('.valid-count');
-        if (!count) { count = document.createElement('p'); count.className = 'valid-count'; statElements[i].after(count); }
-        count.textContent = '有效成績 ' + stats.count + ' 人';
+        statElements[i].classList.toggle('stat-empty', stats.average === null);
     });
 
     // 高一重新編班不列入班級比較；學生仍計入總覽與最終直升統計。
@@ -1174,7 +1175,7 @@ function renderCumulativeView() {
     // Calculate data for Pie Charts
     const fiveAStats = [];
     const chartData = exams.map(exam => {
-        let over30 = 0, between25and29 = 0, between10and24 = 0, under10 = 0;
+        let over30 = 0, between25and29 = 0, between20and25 = 0, between15and20 = 0, under15 = 0;
         let fiveACount = 0;
         let validCount = 0;
 
@@ -1185,8 +1186,9 @@ function renderCumulativeView() {
                     validCount++;
                     if (score >= 30) over30++;
                     else if (score >= 25) between25and29++;
-                    else if (score >= 10) between10and24++;
-                    else under10++;
+                    else if (score >= 20) between20and25++;
+                    else if (score > 15) between15and20++;
+                    else under15++;
 
                     // 5A 判定 (國、英、數、社、自皆達 A 以上)
                     const examData = s[exam];
@@ -1207,19 +1209,20 @@ function renderCumulativeView() {
             validCount
         });
 
-        return [over30, between25and29, between10and24, under10];
+        return [over30, between25and29, between20and25, between15and20, under15];
     });
 
     renderCumulativeCharts(chartData, fiveAStats);
 }
 
 function renderCumulativeCharts(chartData, fiveAStats) {
-    const labels = ['30分以上', '25-29分', '10-24分', '10分以下'];
+    const labels = ['30分以上', '25至未滿30分', '20至未滿25分', '超過15至未滿20分', '15分以下'];
     const colorsArr = [
         colors.primary,     // Blue for >=30
         colors.success,     // Green for 25-29
-        '#cbd5e1',          // Gray for 10-24
-        '#ef4444'           // Red for <10
+        colors.warning,
+        '#cbd5e1',
+        '#ef4444'
     ];
 
     ['M1', 'M2', 'M3', 'M4', 'CAP'].forEach((exam, index) => {
@@ -1234,6 +1237,14 @@ function renderCumulativeCharts(chartData, fiveAStats) {
         const stats = fiveAStats[index];
 
         const card = canvas.closest('.chart-wrapper');
+        const values = createScoreDistributionTable(labels, colorsArr, chartData[index], chartData[index].map(count => stats.validCount ? count / stats.validCount * 100 : 0));
+        const oldValues = card.querySelector('.compare-pie-values');
+        if (oldValues) oldValues.replaceWith(values); else card.append(values);
+        values.hidden = !stats.validCount;
+        let fiveA = card.querySelector('.five-a-summary');
+        if (!fiveA) { fiveA = document.createElement('p'); fiveA.className = 'five-a-summary'; card.append(fiveA); }
+        fiveA.hidden = !stats.validCount;
+        fiveA.innerHTML = `<span>5A</span><span>${stats.count}人</span><span>${stats.percentage}%</span>`;
         let notice = card.querySelector('.exam-empty');
         if (!notice) {
             notice = document.createElement('p');
@@ -1269,16 +1280,13 @@ function renderCumulativeCharts(chartData, fiveAStats) {
                         callbacks: {
                             label: function(context) {
                                 const val = context.raw;
-                                const dataset = context.dataset.data;
-                                const total = dataset.reduce((a, b) => a + b, 0);
-                                const percentage = total > 0 ? ((val / total) * 100).toFixed(1) : 0;
-                                return ` 本區段 (${context.label}): ${val} 人 (${percentage}%)`;
+                                return `${context.label}：${val} 人`;
                             }
                         }
                     },
                     doughnutCenterText: {
-                        line1: `5A: ${stats.count}人`,
-                        line2: `${stats.percentage}%`,
+                        line1: `${stats.validCount} 人`,
+                        line2: '統計人數',
                         color: colors.text,
                         fontStyle: "'Noto Sans TC', 'Inter', sans-serif"
                     }

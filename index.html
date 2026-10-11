@@ -4,11 +4,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>模考成績分析系統 | Mock Exam Dashboard</title>
+    <title>康橋G9模考分析</title>
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+TC:wght@400;500;700;900&display=swap"
         rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=5">
+    <link rel="stylesheet" href="style.css?v=17">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
@@ -24,8 +24,8 @@
         <aside class="sidebar glass-panel">
             <div class="brand">
                 <div class="logo"></div>
-                <h2>成績分析系統</h2>
-                <p>Mock Exam Analytics</p>
+                <h2>康橋G9模考分析</h2>
+                <p>製作｜李祐馨老師</p>
             </div>
 
             <div class="cohort-control">
@@ -49,6 +49,9 @@
                 <button class="nav-btn" data-view="cumulative">
                     <span class="icon">📊</span> 累積人數
                 </button>
+                <button class="nav-btn" data-view="comparison">
+                    <span class="icon">📉</span> 跨年比較
+                </button>
             </nav>
 
 
@@ -65,46 +68,41 @@
             <!-- Dashboard View -->
             <section id="view-dashboard" class="view-section active">
                 <header class="section-header">
-                    <h1>班級成績分析</h1>
-                    <p class="subtitle">班級比較顯示九年級班級；最終直升生納入班群統計。外考生資料僅提供會考成績。</p>
+                    <h1>班級成績分析 <span class="title-student-count" id="total-students"></span></h1>
                 </header>
 
                 <div class="stats-grid">
                     <div class="stat-card glass-panel">
-                        <h4 class="stat-title">總學生數</h4>
-                        <div class="stat-value" id="total-students">--</div>
-                    </div>
-                    <div class="stat-card glass-panel">
-                        <h4 class="stat-title">全校一模平均</h4>
+                        <h4 class="stat-title">一模平均</h4>
                         <div class="stat-value" id="avg-m1">--</div>
                     </div>
                     <div class="stat-card glass-panel">
-                        <h4 class="stat-title">全校二模平均</h4>
+                        <h4 class="stat-title">二模平均</h4>
                         <div class="stat-value" id="avg-m2">--</div>
                     </div>
                     <div class="stat-card glass-panel">
-                        <h4 class="stat-title">全校三模平均</h4>
+                        <h4 class="stat-title">三模平均</h4>
                         <div class="stat-value" id="avg-m3">--</div>
                     </div>
                     <div class="stat-card glass-panel">
-                        <h4 class="stat-title">全校四模平均</h4>
+                        <h4 class="stat-title">四模平均</h4>
                         <div class="stat-value" id="avg-m4">--</div>
                     </div>
                     <div class="stat-card glass-panel">
-                        <h4 class="stat-title">全校會考平均</h4>
+                        <h4 class="stat-title">會考平均</h4>
                         <div class="stat-value" id="avg-cap">--</div>
                     </div>
                 </div>
 
                 <div class="charts-container">
                     <div class="chart-wrapper glass-panel main-chart">
-                        <h3>各班級平均總積分比較</h3>
+                        <h3>班級平均</h3>
                         <div class="canvas-container">
                             <canvas id="classAvgChart"></canvas>
                         </div>
                     </div>
                     <div class="chart-wrapper glass-panel main-chart">
-                        <h3>各班群平均總積分比較 (直升 vs 會考)</h3>
+                        <h3>直升會考比較</h3>
                         <div class="canvas-container">
                             <canvas id="groupAvgChart"></canvas>
                         </div>
@@ -119,8 +117,7 @@
                     <h1 style="margin-bottom: 0; display: flex; align-items: baseline; gap: 16px;">
                         個人表現分析
                         <span id="student-info-display"
-                            style="font-size: 1.15rem; color: var(--text-muted); font-weight: 500;">班級: -- | 座號:
-                            --</span>
+                            style="font-size: 1.15rem; color: var(--text-muted); font-weight: 500;">班級: -- | 座號: --</span>
                         <span id="student-name-display" class="highlight">請選擇學生</span>
                     </h1>
                 </header>
@@ -163,19 +160,19 @@
 
                 <div class="student-dashboard active-state hidden" id="student-dashboard-active">
                     <div class="grades-breakdown glass-panel mb-4" style="margin-bottom: 1.5rem;">
-                        <h3>各次模考詳細成績</h3>
+                        <h3>各次模考</h3>
                         <div class="table-container">
                             <table class="grades-table">
                                 <thead>
                                     <tr>
-                                        <th>考試次別</th>
+                                        <th>考試</th>
                                         <th>總積分</th>
                                         <th>國文</th>
                                         <th>英文</th>
                                         <th>數學</th>
                                         <th>社會</th>
                                         <th>自然</th>
-                                        <th>寫作積分</th>
+                                        <th>寫作</th>
                                     </tr>
                                 </thead>
                                 <tbody id="grades-table-body">
@@ -187,13 +184,13 @@
 
                     <div class="charts-grid">
                         <div class="chart-wrapper glass-panel">
-                            <h3>模考與會考總積分變化</h3>
+                            <h3>總分趨勢圖</h3>
                             <div class="canvas-container" style="height: 250px;">
                                 <canvas id="progressChart"></canvas>
                             </div>
                         </div>
                         <div class="chart-wrapper glass-panel">
-                            <h3>最近一次模考各科雷達圖</h3>
+                            <h3>近期雷達圖</h3>
                             <div class="canvas-container" style="height: 250px;">
                                 <canvas id="radarChart"></canvas>
                             </div>
@@ -206,7 +203,6 @@
             <section id="view-subject" class="view-section">
                 <header class="section-header">
                     <h1>各科表現分析</h1>
-                    <p class="subtitle" id="subject-info-display">請選擇班級以查看各科詳細分佈</p>
                 </header>
 
                 <div class="filters">
@@ -284,70 +280,19 @@
                             </div>
                         </div>
                         <!-- Unified Legend -->
-                        <div class="custom-legend glass-panel"
-                            style="display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; padding: 10px;">
-                            <div style="display: flex; align-items: center; gap: 6px;"><span
-                                    style="display: inline-block; width: 12px; height: 12px; background: rgba(59, 130, 246, 1); border-radius: 50%;"></span>30分以上
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 6px;"><span
-                                    style="display: inline-block; width: 12px; height: 12px; background: rgba(16, 185, 129, 1); border-radius: 50%;"></span>25-29分
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 6px;"><span
-                                    style="display: inline-block; width: 12px; height: 12px; background: rgba(203, 213, 225, 1); border-radius: 50%;"></span>10-24分
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 6px;"><span
-                                    style="display: inline-block; width: 12px; height: 12px; background: rgba(239, 68, 68, 1); border-radius: 50%;"></span>10分以下
-                            </div>
-                        </div>
                     </div>
-
-                    <div class="charts-container"
-                        style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px;">
-                        <div class="chart-wrapper glass-panel" style="padding: 12px; gap: 4px;">
-                            <h3 style="font-size: 1rem; margin-bottom: 4px;">一模</h3>
-                            <div class="canvas-container" style="height: 180px;">
-                                <canvas id="pieChartM1"></canvas>
-                            </div>
-                        </div>
-                        <div class="chart-wrapper glass-panel" style="padding: 12px; gap: 4px;">
-                            <h3 style="font-size: 1rem; margin-bottom: 4px;">二模</h3>
-                            <div class="canvas-container" style="height: 180px;">
-                                <canvas id="pieChartM2"></canvas>
-                            </div>
-                        </div>
-                        <div class="chart-wrapper glass-panel" style="padding: 12px; gap: 4px;">
-                            <h3 style="font-size: 1rem; margin-bottom: 4px;">三模</h3>
-                            <div class="canvas-container" style="height: 180px;">
-                                <canvas id="pieChartM3"></canvas>
-                            </div>
-                        </div>
-                        <div class="chart-wrapper glass-panel" style="padding: 12px; gap: 4px;">
-                            <h3 style="font-size: 1rem; margin-bottom: 4px;">四模</h3>
-                            <div class="canvas-container" style="height: 180px;">
-                                <canvas id="pieChartM4"></canvas>
-                            </div>
-                        </div>
-                        <div class="chart-wrapper glass-panel" style="padding: 12px; gap: 4px;">
-                            <h3 style="font-size: 1rem; margin-bottom: 4px;">會考</h3>
-                            <div class="canvas-container" style="height: 180px;">
-                                <canvas id="pieChartCAP"></canvas>
-                            </div>
-                        </div>
-                    </div>
-
-                </div>
+            <div class="charts-container compare-pie-grid"><div class="chart-wrapper glass-panel"><h3 style="font-size:1rem">一模</h3><div class="canvas-container" style="height:180px"><canvas id="pieChartM1"></canvas></div></div><div class="chart-wrapper glass-panel"><h3 style="font-size:1rem">二模</h3><div class="canvas-container" style="height:180px"><canvas id="pieChartM2"></canvas></div></div><div class="chart-wrapper glass-panel"><h3 style="font-size:1rem">三模</h3><div class="canvas-container" style="height:180px"><canvas id="pieChartM3"></canvas></div></div><div class="chart-wrapper glass-panel"><h3 style="font-size:1rem">四模</h3><div class="canvas-container" style="height:180px"><canvas id="pieChartM4"></canvas></div></div><div class="chart-wrapper glass-panel"><h3 style="font-size:1rem">會考</h3><div class="canvas-container" style="height:180px"><canvas id="pieChartCAP"></canvas></div></div></div></div>
             </section>
 
             <!-- Ranking View -->
             <section id="view-ranking" class="view-section">
                 <header class="section-header">
                     <h1>總體排名分析</h1>
-                    <p class="subtitle" id="ranking-info-display">請選擇考試項目以載入排名計分板</p>
                 </header>
 
                 <div class="filters">
                     <div class="filter-group">
-                        <label for="ranking-exam-select">選擇考試 (必選)：</label>
+                        <label for="ranking-exam-select">選擇考試：</label>
                         <select id="ranking-exam-select">
                             <option value="">請選擇考試項目...</option>
                             <option value="一模">一模</option>
@@ -399,7 +344,7 @@
                                         <th>數學</th>
                                         <th>社會</th>
                                         <th>自然</th>
-                                        <th>寫作積分</th>
+                                        <th>寫作</th>
                                     </tr>
                                 </thead>
                                 <tbody id="ranking-table-body">
@@ -410,12 +355,38 @@
                     </div>
                 </div>
             </section>
+            <section id="view-comparison" class="view-section">
+                <header class="section-header">
+                    <h1>跨年比較</h1>
+                </header>
+                <p id="compare-status" class="compare-note" role="status"></p>
+                <div id="compare-results" hidden>
+                    <div id="compare-rows"></div>
+                    <div class="charts-container">
+                        <div class="chart-wrapper glass-panel main-chart">
+                            <h3>歷年走勢圖</h3>
+                            <div class="canvas-container"><canvas id="compare-history-trend"></canvas></div>
+                        </div>
+                    </div>
+                    <div class="grades-breakdown glass-panel compare-details">
+                        <h3>歷年統計表</h3>
+                        <div class="table-container"><table class="grades-table"><thead id="compare-history-average-head"></thead><tbody id="compare-history-average-body"></tbody></table></div>
+                    </div>
+                    <div class="grades-breakdown glass-panel compare-details">
+                        <h3>歷年分布圖</h3>
+                        <div id="compare-current-pies" class="compare-pie-grid"></div>
+                        <h4 class="compare-pie-heading">其他歷年：原表比例</h4>
+                        <div id="compare-history-pies" class="compare-pie-grid"></div>
+                    </div>
+                </div>
+            </section>
         </main>
     </div>
 
     <script src="data-model.js?v=2"></script>
-    <script src="cohorts.js?v=2"></script>
-    <script src="app.js?v=18"></script>
+    <script src="cohorts.js?v=6"></script>
+    <script src="comparison-overview.js?v=18"></script>
+    <script src="app.js?v=23"></script>
 </body>
 
 </html>

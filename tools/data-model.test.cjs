@@ -55,3 +55,32 @@ test('115級一模匯入141人，作文六級分與來源積分一致', () => {
     data.students.forEach(s=>assert.equal(s.一模.作,model.essayGradeFromPoints(s.一模.作文原始積分)));
     assert.equal(require('../data/cohorts.json').defaultCohort,'115');
 });
+test('115級課程組全數匹配且分組更新保留ID及原始成績', () => {
+    const current = require('../data/115.json');
+    const {execFileSync} = require('node:child_process');
+    const previous = JSON.parse(execFileSync('git',['show','HEAD:data/115.json'],{cwd:require('node:path').join(__dirname,'..'),encoding:'utf8'}));
+    assert.equal(current.groupSource.matched,141);
+    assert.equal(new Set(current.students.map(s=>s.學號)).size,141);
+    assert.equal(current.students.filter(s=>s.組別==='直升班').length,72);
+    assert.equal(current.students.filter(s=>s.組別==='會考組').length,69);
+    current.students.forEach((s,i)=>{
+        assert.equal(s.id,previous.students[i].id);
+        assert.deepEqual(s.一模,previous.students[i].一模);
+        assert.equal(s.組別,s.課程組.includes('直升')?'直升班':'會考組');
+    });
+    assert.deepEqual(model.summary(current.students,'二模'),{count:0,average:null});
+});
+test('歷年圖片彙總保留缺漏與各自統計範圍', () => {
+    const history = require('../data/history.json');
+    assert.equal(history.averages.length,6);
+    assert.equal(history.thresholds.length,6);
+    history.averages.forEach(row=>{
+        if(row.會考!==null) assert.ok(Math.abs(row.會考-row.四模-row.會考較四模)<1e-10);
+    });
+    assert.equal(history.averages.find(r=>r.academicYear===114).count,110);
+    assert.equal(history.averages.find(r=>r.academicYear===115).二模,null);
+    history.thresholds.forEach(row=>{
+        assert.equal(row.capYear,row.academicYear+1);
+        assert.ok(row.over30<=row.over25 && row.over25<=row.over20);
+    });
+});

@@ -1,0 +1,20 @@
+{
+  "averagesSource": "螢幕擷取畫面 2026-10-05 103556.png",
+  "thresholdsSource": "1791165825232.jpg",
+  "averages": [
+    {"academicYear":110,"count":126,"一模":18.7,"二模":19.2,"三模":19.4,"四模":19.8,"會考":20.8,"會考較四模":1.0},
+    {"academicYear":111,"count":119,"一模":19.0,"二模":20.8,"三模":20.7,"四模":20.4,"會考":21.3,"會考較四模":0.9},
+    {"academicYear":112,"count":121,"一模":19.4,"二模":18.4,"三模":18.5,"四模":19.7,"會考":20.8,"會考較四模":1.1},
+    {"academicYear":113,"count":110,"一模":17.8,"二模":19.7,"三模":18.2,"四模":20.1,"會考":20.4,"會考較四模":0.3},
+    {"academicYear":114,"count":110,"一模":21.1,"二模":21.1,"三模":22.5,"四模":21.8,"會考":21.5,"會考較四模":-0.3},
+    {"academicYear":115,"count":141,"一模":21.4,"二模":null,"三模":null,"四模":null,"會考":null,"會考較四模":null}
+  ],
+  "thresholds": [
+    {"capYear":110,"academicYear":109,"count":88,"over30":9.1,"over25":17.0,"over20":36.4,"under14_8":31.8},
+    {"capYear":111,"academicYear":110,"count":135,"over30":9.6,"over25":25.9,"over20":48.9,"under14_8":27.4},
+    {"capYear":112,"academicYear":111,"count":125,"over30":12.0,"over25":28.8,"over20":50.4,"under14_8":20.8},
+    {"capYear":113,"academicYear":112,"count":126,"over30":11.9,"over25":25.4,"over20":45.2,"under14_8":23.8},
+    {"capYear":114,"academicYear":113,"count":108,"over30":12.0,"over25":27.8,"over20":51.9,"under14_8":22.2},
+    {"capYear":115,"academicYear":114,"count":110,"over30":13.6,"over25":24.5,"over20":53.6,"under14_8":16.4}
+  ]
+}

@@ -46,16 +46,13 @@ async function switchCohort(id) {
         elements.rankingTableBody.replaceChildren();
         elements.subjectFilter.selectedIndex = 0;
         resetStudentView();
-        document.querySelectorAll('.section-header h1').forEach(title => {
+        document.querySelectorAll('.view-section:not(#view-comparison) .section-header h1').forEach(title => {
             let badge = title.querySelector('.cohort-badge');
             if (!badge) { badge = document.createElement('span'); badge.className = 'cohort-badge'; title.prepend(badge); }
             badge.textContent = entry.label;
         });
         document.getElementById('cohort-empty').hidden = data.students.length > 0;
-        status.textContent = data.students.length ? `${data.students.length} 位學生・${state.availableExams.length} 項考試` : '尚未匯入資料';
-        document.querySelector('#view-dashboard .subtitle').textContent = id === '114'
-            ? '班級比較顯示九年級班級；最終直升生納入班群統計。外考生資料僅提供會考成績。'
-            : `已匯入${state.availableExams.join('、') || '尚無考試資料'}。${groups.includes('未分組') ? '分組資料尚未提供。' : ''}`;
+        status.textContent = data.students.length ? '' : '尚未匯入資料';
         renderDashboardView();
         renderRankingView();
         renderCumulativeView();
@@ -73,7 +70,15 @@ async function switchCohort(id) {
 
 // 共用考試設定，未匯入的考試不繪製資料列。
 function createExamChart(ctx, config) {
-    if (config.type === 'bar') config.data.datasets = config.data.datasets.filter(d => !ScoreData.exams.includes(d.label) || state.availableExams.includes(d.label));
+    if (config.type === 'bar') {
+        config.data.datasets = config.data.datasets.filter(d => !ScoreData.exams.includes(d.label) || state.availableExams.includes(d.label));
+        if (config.data.datasets.length === 1) {
+            const dataset = config.data.datasets[0];
+            dataset.maxBarThickness = 40;
+            dataset.categoryPercentage = 0.6;
+            dataset.barPercentage = 0.7;
+        }
+    }
     if (config.type === 'line') {
         const indices = config.data.labels.map((label, i) => state.availableExams.includes(label) ? i : -1).filter(i => i >= 0);
         config.data.labels = indices.map(i => config.data.labels[i]);

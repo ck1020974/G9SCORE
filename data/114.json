@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "cohort": "114",
-  "academicYear": null,
+  "academicYear": 114,
   "exams": [
     "一模",
     "二模",
@@ -15,7 +15,8 @@
       "1002"
     ],
     "hiddenDashboardGroups": [
-      "A組"
+      "A組",
+      "最終直升"
     ]
   },
   "students": [
