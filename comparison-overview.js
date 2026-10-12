@@ -1,4 +1,4 @@
-const comparisonState = { charts:[], request:0 };
+const comparisonState = { charts:[], request:0, ready:false };
 const compareControl = id => document.getElementById('compare-' + id);
 const comparisonFormat = (value,unit='') => value === null || value === undefined ? '尚無資料' : value.toFixed(1)+unit;
 
@@ -9,6 +9,13 @@ function updateComparisonMode() {
 }
 
 async function renderComparisonView() {
+    if (comparisonState.ready) {
+        compareControl('results').hidden = false;
+        requestAnimationFrame(() => {
+            if (state.currentView === 'comparison') comparisonState.charts.forEach(chart => chart.resize());
+        });
+        return;
+    }
     const request = ++comparisonState.request;
     comparisonState.charts.forEach(c=>c.destroy());
     comparisonState.charts = [];
@@ -21,7 +28,7 @@ async function renderComparisonView() {
             Promise.all(state.cohorts.map(async e=>ScoreData.validate(await loadJson(e.file),e.id))),
             loadJson('./data/history.json')
         ]);
-        if (request !== comparisonState.request) return;
+        if (request !== comparisonState.request || state.currentView !== 'comparison') return;
         const data = ids.map(id=>allCohorts.find(d=>String(d.cohort)===id));
         const summaries = data.map(d=>ScoreData.exams.map(exam=>ScoreData.summary(d.students,exam)));
         compareControl('rows').replaceChildren(...entries.map((entry,i)=>{
@@ -36,8 +43,14 @@ async function renderComparisonView() {
         compareControl('status').textContent='';
         compareControl('results').hidden=false;
         renderHistory(history,allCohorts);
+        comparisonState.ready = true;
     } catch(error) {
-        if (request===comparisonState.request) compareControl('status').textContent='載入失敗：'+error.message;
+        if (request===comparisonState.request) {
+            compareControl('results').hidden = true;
+            comparisonState.charts.forEach(chart => chart.destroy());
+            comparisonState.charts = [];
+            compareControl('status').textContent='載入失敗：'+error.message+'，請切換分頁後重試。';
+        }
     }
 }
 

@@ -45,10 +45,12 @@ node tools/import-cohort.cjs 115 待匯入.json
 總體排名首次載入或切換級別時，預設最近一次具有有效總積分的考試、全校及所有班級；使用者仍可自行調整篩選。
 
 ```powershell
-node --test tools/data-model.test.cjs tools/history-pies.test.cjs
+node --test tools/data-model.test.cjs tools/history-pies.test.cjs tools/loading.test.cjs
 ```
 
 ## 跨年比較
+
+圖表使用隨網站提供的Chart.js 4.5.1（MIT），不依賴外部繪圖CDN。JSON資料在本次瀏覽中共用快取；重新整理頁面會重新讀取，失敗的請求可重試。跨年比較再次進入時直接使用已建立的圖表，避免反覆下載與重建。
 
 自動顯示最新兩級，目前上排114級、下排115級；學生數放在級別標題，各排卡片顯示一模到會考平均。下方提供歷年走勢圖、歷年統計表及歷年分布圖。
 每級採全體名單，各次平均使用該次有效總積分，不因個別科目缺漏排除學生。115級一模納入141人；114級模考有效110人、會考121人。缺少考試顯示尚無資料，折線留空，不當零分。

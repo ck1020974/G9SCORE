@@ -147,8 +147,8 @@ Chart.register(doughnutCenterTextPlugin);
 
 async function initApp() {
     try {
-        await initializeCohorts();
         setupEventListeners();
+        await initializeCohorts();
     } catch (error) {
         console.error('資料載入失敗', error.message);
         elements.loadingIndicator.textContent = '資料載入失敗，請重新整理。';
@@ -696,10 +696,6 @@ function renderGroupAvgChart(labels, m1, m2, m3, m4, cap) {
                     position: 'top',
                     labels: { color: colors.text }
                 }
-            },
-            animation: {
-                duration: 1500,
-                easing: 'easeOutQuart'
             }
         }
     });
@@ -777,10 +773,6 @@ function renderClassAvgChart(labels, m1, m2, m3, m4, cap) {
                     position: 'top',
                     labels: { color: colors.text }
                 }
-            },
-            animation: {
-                duration: 1500,
-                easing: 'easeOutQuart'
             }
         }
     });

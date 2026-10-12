@@ -1,9 +1,18 @@
 let cohortRequest = 0;
+const jsonRequests = new Map();
 
 async function loadJson(path) {
-    const response = await fetch(path + '?v=' + Date.now());
-    if (!response.ok) throw new Error('無法讀取級別資料');
-    return response.json();
+    if (!jsonRequests.has(path)) {
+        const request = fetch(path + '?v=' + Date.now()).then(response => {
+            if (!response.ok) throw new Error('無法讀取級別資料');
+            return response.json();
+        }).catch(error => {
+            jsonRequests.delete(path);
+            throw error;
+        });
+        jsonRequests.set(path, request);
+    }
+    return jsonRequests.get(path);
 }
 
 async function initializeCohorts() {
@@ -21,6 +30,7 @@ async function switchCohort(id) {
     const select = document.getElementById('cohort-select');
     const status = document.getElementById('cohort-status');
     select.disabled = true;
+    elements.navBtns.forEach(btn => btn.disabled = true);
     status.textContent = '載入資料中…';
     try {
         const entry = state.cohorts.find(c => c.id === id);
@@ -65,7 +75,10 @@ async function switchCohort(id) {
         if (state.cohort) select.value = String(state.cohort.cohort);
         throw error;
     } finally {
-        if (request === cohortRequest) select.disabled = false;
+        if (request === cohortRequest) {
+            select.disabled = false;
+            elements.navBtns.forEach(btn => btn.disabled = false);
+        }
     }
 }
 
