@@ -48,8 +48,8 @@ function renderHistory(history,cohortData) {
     renderHistoryPies(history.thresholds,cohortData);
     const palette=[colors.primary,colors.accent1,colors.accent2,colors.success,colors.warning,'#64748b'];
     comparisonState.charts.push(new Chart(compareControl('history-trend').getContext('2d'),{
-        type:'line',data:{labels:ScoreData.exams,datasets:history.averages.map((row,i)=>({label:row.academicYear+'學年度',data:ScoreData.exams.map(e=>row[e]),borderColor:palette[i%palette.length],backgroundColor:palette[i%palette.length],borderWidth:2,pointRadius:4,tension:0.15,spanGaps:false}))},
-        options:{responsive:true,maintainAspectRatio:false,scales:{y:{title:{display:true,text:'平均總積分'},grid:{color:colors.grid}},x:{grid:{display:false}}},plugins:{tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}：${comparisonFormat(ctx.raw)} 分（來源統計 ${history.averages[ctx.datasetIndex].count} 人）`}}}}
+        type:'line',data:{labels:ScoreData.exams,datasets:history.averages.map((row,i)=>({label:String(row.academicYear),data:ScoreData.exams.map(e=>row[e]),borderColor:palette[i%palette.length],backgroundColor:palette[i%palette.length],borderWidth:1.75,pointRadius:ScoreData.exams.filter(e=>row[e]!==null).length===1?5:3,tension:0.15,spanGaps:false}))},
+        options:{responsive:true,maintainAspectRatio:false,scales:{y:{min:15,max:30,ticks:{stepSize:5},title:{display:true,text:'平均總積分'},grid:{color:colors.grid}},x:{grid:{display:false}}},plugins:{legend:{labels:{boxWidth:16,boxHeight:6,padding:10}},tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}：${comparisonFormat(ctx.raw)} 分（來源統計 ${history.averages[ctx.datasetIndex].count} 人）`}}}}
     }));
 }
 

@@ -96,7 +96,8 @@ const colors = {
 
 // Default Chart.js Configuration for light theme
 Chart.defaults.color = colors.text;
-Chart.defaults.font.family = "'Inter', 'Noto Sans TC', sans-serif";
+Chart.defaults.font.family = "'Noto Sans TC', sans-serif";
+Chart.defaults.animation = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? false : {duration: 250};
 Chart.defaults.plugins.tooltip.backgroundColor = 'rgba(255, 255, 255, 0.9)';
 Chart.defaults.plugins.tooltip.titleColor = '#0f172a';
 Chart.defaults.plugins.tooltip.bodyColor = '#334155';
@@ -315,8 +316,9 @@ function setupEventListeners() {
     elements.navBtns.forEach(btn => {
         btn.addEventListener('click', (e) => {
             // Update active states
-            elements.navBtns.forEach(b => b.classList.remove('active'));
+            elements.navBtns.forEach(b => { b.classList.remove('active'); b.removeAttribute('aria-current'); });
             e.currentTarget.classList.add('active');
+            e.currentTarget.setAttribute('aria-current', 'page');
 
             // Switch views
             const viewId = e.currentTarget.dataset.view;
@@ -482,6 +484,7 @@ function navigateToStudentProfile(cls, seat) {
 
     // 4. 更新 Sidebar 按鈕選中狀態
     elements.navBtns.forEach(btn => {
+        if (btn.dataset.view === 'student') btn.setAttribute('aria-current', 'page'); else btn.removeAttribute('aria-current');
         if (btn.dataset.view === 'student') {
             btn.classList.add('active');
         } else {

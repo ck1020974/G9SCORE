@@ -5,19 +5,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>康橋G9模考分析</title>
+    <meta name="theme-color" content="#f3f6fa">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+TC:wght@400;500;700;900&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&display=swap"
         rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=17">
+    <link rel="stylesheet" href="style.css?v=19">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
 <body>
-    <div class="background-orbs">
-        <div class="orb orb-1"></div>
-        <div class="orb orb-2"></div>
-        <div class="orb orb-3"></div>
-    </div>
+    <a class="skip-link" href="#main-content">跳到主要內容</a>
 
     <div class="app-container">
         <!-- Sidebar / Navigation -->
@@ -33,24 +32,24 @@
                 <select id="cohort-select" aria-describedby="cohort-status"></select>
                 <p id="cohort-status" role="status"></p>
             </div>
-            <nav class="nav-menu">
-                <button class="nav-btn active" data-view="dashboard">
-                    <span class="icon">📊</span> 班級總覽
+            <nav class="nav-menu" aria-label="分析分頁">
+                <button class="nav-btn active" data-view="dashboard" aria-current="page">
+                    <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg> 班級總覽
                 </button>
                 <button class="nav-btn" data-view="ranking">
-                    <span class="icon">🏆</span> 總體排名
+                    <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 21V11h8v10M3 21V15h5M16 21h5V7h-5M3 21h18M5 5h5M7.5 2.5v5"/></svg> 總體排名
                 </button>
                 <button class="nav-btn" data-view="student">
-                    <span class="icon">🧑‍🎓</span> 個人表現
+                    <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="7" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/></svg> 個人表現
                 </button>
                 <button class="nav-btn" data-view="subject">
-                    <span class="icon">📈</span> 各科分佈
+                    <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 16V9M12 16V5M17 16v-4"/></svg> 各科分佈
                 </button>
                 <button class="nav-btn" data-view="cumulative">
-                    <span class="icon">📊</span> 累積人數
+                    <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v9h9A9 9 0 1 1 12 3ZM16 3a7 7 0 0 1 5 5h-5Z"/></svg> 累積人數
                 </button>
                 <button class="nav-btn" data-view="comparison">
-                    <span class="icon">📉</span> 跨年比較
+                    <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M6 15l4-5 4 2 6-7M6 18l4-3 4 2 6-5"/></svg> 跨年比較
                 </button>
             </nav>
 
@@ -58,12 +57,12 @@
 
             <div class="loading-state" id="loading-indicator">
                 <div class="spinner"></div>
-                <p>載入資料中...</p>
+                <p>載入資料中…</p>
             </div>
         </aside>
 
         <!-- Main Content Area -->
-        <main class="main-content">
+        <main class="main-content" id="main-content" tabindex="-1">
             <div id="cohort-empty" class="glass-panel cohort-empty" role="status" hidden>本級尚未匯入資料，匯入後即可查看各項分析。</div>
             <!-- Dashboard View -->
             <section id="view-dashboard" class="view-section active">
@@ -98,13 +97,13 @@
                     <div class="chart-wrapper glass-panel main-chart">
                         <h3>班級平均</h3>
                         <div class="canvas-container">
-                            <canvas id="classAvgChart"></canvas>
+                            <canvas id="classAvgChart" role="img" aria-label="班級平均總積分"></canvas>
                         </div>
                     </div>
                     <div class="chart-wrapper glass-panel main-chart">
                         <h3>直升會考比較</h3>
                         <div class="canvas-container">
-                            <canvas id="groupAvgChart"></canvas>
+                            <canvas id="groupAvgChart" role="img" aria-label="直升班與會考組平均總積分"></canvas>
                         </div>
                     </div>
                 </div>
@@ -147,14 +146,14 @@
                     </div>
                     <div class="filter-group">
                         <label for="student-search">搜尋:</label>
-                        <input type="text" id="student-search" placeholder="姓名/座號">
+                        <input type="text" id="student-search" name="student-search" autocomplete="off" placeholder="姓名／座號…">
                     </div>
                 </div>
 
                 <div class="student-dashboard placeholder-state" id="student-dashboard-content">
                     <div class="placeholder-message">
                         <div class="icon">🔍</div>
-                        <p>請從左側選單選擇或搜尋學生以查看詳細成績</p>
+                        <p>請選擇或搜尋學生以查看成績</p>
                     </div>
                 </div>
 
@@ -186,13 +185,13 @@
                         <div class="chart-wrapper glass-panel">
                             <h3>總分趨勢圖</h3>
                             <div class="canvas-container" style="height: 250px;">
-                                <canvas id="progressChart"></canvas>
+                                <canvas id="progressChart" role="img" aria-label="個人總分趨勢"></canvas>
                             </div>
                         </div>
                         <div class="chart-wrapper glass-panel">
                             <h3>近期雷達圖</h3>
                             <div class="canvas-container" style="height: 250px;">
-                                <canvas id="radarChart"></canvas>
+                                <canvas id="radarChart" role="img" aria-label="個人近期各科能力"></canvas>
                             </div>
                         </div>
                     </div>
@@ -246,7 +245,7 @@
                     <div class="chart-wrapper glass-panel">
                         <h3 id="subject-chart-title">各科等級人數長條圖</h3>
                         <div class="canvas-container">
-                            <canvas id="subjectBarChart"></canvas>
+                            <canvas id="subjectBarChart" role="img" aria-label="各科成績分佈"></canvas>
                         </div>
                     </div>
                 </div>
@@ -281,7 +280,7 @@
                         </div>
                         <!-- Unified Legend -->
                     </div>
-            <div class="charts-container compare-pie-grid"><div class="chart-wrapper glass-panel"><h3 style="font-size:1rem">一模</h3><div class="canvas-container" style="height:180px"><canvas id="pieChartM1"></canvas></div></div><div class="chart-wrapper glass-panel"><h3 style="font-size:1rem">二模</h3><div class="canvas-container" style="height:180px"><canvas id="pieChartM2"></canvas></div></div><div class="chart-wrapper glass-panel"><h3 style="font-size:1rem">三模</h3><div class="canvas-container" style="height:180px"><canvas id="pieChartM3"></canvas></div></div><div class="chart-wrapper glass-panel"><h3 style="font-size:1rem">四模</h3><div class="canvas-container" style="height:180px"><canvas id="pieChartM4"></canvas></div></div><div class="chart-wrapper glass-panel"><h3 style="font-size:1rem">會考</h3><div class="canvas-container" style="height:180px"><canvas id="pieChartCAP"></canvas></div></div></div></div>
+            <div class="charts-container compare-pie-grid"><div class="chart-wrapper glass-panel"><h3 style="font-size:1rem">一模</h3><div class="canvas-container" style="height:180px"><canvas id="pieChartM1" role="img" aria-label="一模分數分布"></canvas></div></div><div class="chart-wrapper glass-panel"><h3 style="font-size:1rem">二模</h3><div class="canvas-container" style="height:180px"><canvas id="pieChartM2" role="img" aria-label="二模分數分布"></canvas></div></div><div class="chart-wrapper glass-panel"><h3 style="font-size:1rem">三模</h3><div class="canvas-container" style="height:180px"><canvas id="pieChartM3" role="img" aria-label="三模分數分布"></canvas></div></div><div class="chart-wrapper glass-panel"><h3 style="font-size:1rem">四模</h3><div class="canvas-container" style="height:180px"><canvas id="pieChartM4" role="img" aria-label="四模分數分布"></canvas></div></div><div class="chart-wrapper glass-panel"><h3 style="font-size:1rem">會考</h3><div class="canvas-container" style="height:180px"><canvas id="pieChartCAP" role="img" aria-label="會考分數分布"></canvas></div></div></div></div>
             </section>
 
             <!-- Ranking View -->
@@ -362,15 +361,15 @@
                 <p id="compare-status" class="compare-note" role="status"></p>
                 <div id="compare-results" hidden>
                     <div id="compare-rows"></div>
-                    <div class="charts-container">
-                        <div class="chart-wrapper glass-panel main-chart">
+                    <div class="compare-history-layout">
+                        <div class="chart-wrapper glass-panel compare-history-chart">
                             <h3>歷年走勢圖</h3>
-                            <div class="canvas-container"><canvas id="compare-history-trend"></canvas></div>
+                            <div class="canvas-container"><canvas id="compare-history-trend" role="img" aria-label="歷年平均總積分走勢"></canvas></div>
                         </div>
-                    </div>
-                    <div class="grades-breakdown glass-panel compare-details">
-                        <h3>歷年統計表</h3>
-                        <div class="table-container"><table class="grades-table"><thead id="compare-history-average-head"></thead><tbody id="compare-history-average-body"></tbody></table></div>
+                        <div class="grades-breakdown glass-panel compare-history-table">
+                            <h3>歷年統計表</h3>
+                            <div class="table-container"><table class="grades-table"><thead id="compare-history-average-head"></thead><tbody id="compare-history-average-body"></tbody></table></div>
+                        </div>
                     </div>
                     <div class="grades-breakdown glass-panel compare-details">
                         <h3>歷年分布圖</h3>
@@ -385,8 +384,8 @@
 
     <script src="data-model.js?v=2"></script>
     <script src="cohorts.js?v=6"></script>
-    <script src="comparison-overview.js?v=18"></script>
-    <script src="app.js?v=23"></script>
+    <script src="comparison-overview.js?v=20"></script>
+    <script src="app.js?v=24"></script>
 </body>
 
 </html>

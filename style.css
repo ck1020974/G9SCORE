@@ -1,12 +1,12 @@
 :root {
-    --bg-color: #f8fafc;
-    --text-color: #0f172a;
-    --text-muted: #64748b;
-    --glass-bg: rgba(255, 255, 255, 0.85);
-    --glass-border: rgba(0, 0, 0, 0.05);
-    --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.05);
+    --bg-color: #f3f6fa;
+    --text-color: #142d4e;
+    --text-muted: #52657a;
+    --glass-bg: #ffffff;
+    --glass-border: #d7e0eb;
+    --glass-shadow: 0 2px 8px rgba(20, 45, 78, 0.035);
     
-    --primary: #3b82f6;
+    --primary: #2563eb;
     --primary-hover: #2563eb;
     --accent-1: #8b5cf6;
     --accent-2: #ec4899;
@@ -14,12 +14,12 @@
     --warning: #f59e0b;
     --danger: #ef4444;
 
-    --font-heading: 'Noto Sans TC', 'Inter', sans-serif;
-    --font-body: 'Inter', 'Noto Sans TC', sans-serif;
+    --font-heading: 'Noto Sans TC', sans-serif;
+    --font-body: 'Noto Sans TC', sans-serif;
     
-    --sidebar-width: 280px;
-    --radius-lg: 16px;
-    --radius-md: 12px;
+    --sidebar-width: 248px;
+    --radius-lg: 12px;
+    --radius-md: 8px;
     --radius-sm: 8px;
 }
 
@@ -94,8 +94,6 @@ body {
 /* Glassmorphism Panel */
 .glass-panel {
     background: var(--glass-bg);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
     border: 1px solid var(--glass-border);
     box-shadow: var(--glass-shadow);
     border-radius: var(--radius-lg);
@@ -127,11 +125,8 @@ body {
 .brand h2 {
     font-family: var(--font-heading);
     font-size: 1.25rem;
-    font-weight: 800;
-    background: linear-gradient(to right, var(--primary), var(--text-color));
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
+    font-weight: 700;
+    color: var(--text-color);
     margin-bottom: 4px;
 }
 
@@ -139,8 +134,7 @@ body {
     color: var(--text-muted);
     font-size: 0.875rem;
     font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 0;
 }
 
 .nav-menu {
@@ -163,19 +157,18 @@ body {
     display: flex;
     align-items: center;
     gap: 12px;
-    transition: all 0.3s ease;
+    transition: background-color 0.15s ease, color 0.15s ease;
 }
 
 .nav-btn:hover {
     color: var(--text-color);
-    background: rgba(255, 255, 255, 0.05);
-    transform: translateX(4px);
+    background: #edf3fb;
 }
 
 .nav-btn.active {
-    color: #ffffff; /* keep active nav btn text white because the background is a solid color gradient */
-    background: linear-gradient(135deg, var(--primary) 0%, var(--accent-1) 100%);
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    color: #ffffff;
+    background: #142d4e;
+    box-shadow: none;
 }
 
 .filters {
@@ -212,12 +205,11 @@ select, input {
     min-width: 120px;
     padding: 10px 12px;
     border-radius: var(--radius-md);
-    background: rgba(0, 0, 0, 0.2);
+    background: #ffffff;
     border: 1px solid var(--glass-border);
     color: var(--text-color);
     font-family: var(--font-body);
     font-size: 0.95rem;
-    outline: none;
     transition: border-color 0.2s ease;
 }
 
@@ -267,7 +259,6 @@ select option {
     display: none;
     flex-direction: column;
     gap: 16px; /* Reduced from 24px */
-    animation: fadeIn 0.4s ease-out forwards;
     height: 100%;
 }
 
@@ -317,7 +308,7 @@ select option {
 }
 
 .stat-card:hover {
-    transform: translateY(-4px);
+    transform: none;
 }
 
 .stat-card:nth-child(1) { border-top-color: var(--primary); }
@@ -431,7 +422,7 @@ select option {
     font-weight: 700;
     font-size: 0.875rem;
     text-transform: uppercase;
-    background: linear-gradient(90deg, var(--primary), var(--accent-1));
+    background: #142d4e;
 }
 
 .grades-table tr:hover {
@@ -530,6 +521,19 @@ select option {
 #compare-rows .compare-year-row:first-child { margin-top: 16px; }
 .compare-note { color: var(--text-muted); font-size: 0.875rem; line-height: 1.7; margin-bottom: 12px; }
 .compare-details { padding: 24px; margin-top: 24px; }
+.compare-history-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }
+.compare-history-layout > div { min-width: 0; padding: 20px; }
+.compare-history-chart { width: 100%; max-width: 800px; justify-self: center; }
+#view-comparison .compare-history-chart .canvas-container { height: 360px; }
+.compare-history-table .grades-table { min-width: 520px; }
+.compare-history-table .grades-table th, .compare-history-table .grades-table td { padding: 10px 6px; font-size: 0.875rem; }
+@media (min-width: 1400px) {
+    .compare-history-layout { grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); align-items: stretch; }
+}
+@media (max-width: 768px) {
+    .compare-history-layout > div { padding: 16px; }
+    #view-comparison .compare-history-chart .canvas-container { height: 320px; }
+}
 #view-comparison .canvas-container { height: 300px; }
 .compare-year-row { margin: 24px 0; }
 .compare-year-row h2 { font-size: 1.2rem; margin-bottom: 12px; color: var(--primary); }
@@ -561,4 +565,53 @@ select option {
 @media (max-width: 768px) {
     .compare-overview-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .compare-details { padding: 16px; }
+}
+
+/* School report design: clear hierarchy, compact navigation, readable data. */
+html { color-scheme: light; }
+.nav-icon { width: 20px; height: 20px; flex-shrink: 0; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.brand { padding: 0 0 16px; border-bottom: 1px solid var(--glass-border); }
+.brand p { font-size: 0.8rem; font-weight: 400; }
+.sidebar { gap: 20px; }
+.nav-btn { min-height: 44px; font-size: 0.9rem; padding: 11px 12px; touch-action: manipulation; }
+.section-header h1 { text-wrap: balance; }
+.stat-card, .grades-table, .compare-pie-values { font-variant-numeric: tabular-nums; }
+.stat-value { font-weight: 700; }
+.stat-value.stat-empty { font-weight: 400; font-size: 1.5rem; color: var(--text-muted); }
+.stat-card { border-top-color: var(--glass-border) !important; }
+.stat-card .stat-title, .stat-card h4 { color: var(--text-muted); font-size: 0.85rem; font-weight: 500; }
+.grades-table tbody tr:nth-child(even) { background: #f7f9fc; }
+.grades-table tbody tr:hover { background: #edf3fb; }
+.grades-table th:first-child { border-radius: 6px 0 0 0; }
+.grades-table th:last-child { border-radius: 0 6px 0 0; }
+.grade-A { color: #b42a71; }
+.grade-B { color: #2461b5; }
+select, input { border-color: #c5d1df; color: var(--text-color); }
+button, a, select, input { -webkit-tap-highlight-color: rgba(37, 99, 235, 0.12); }
+:is(button, a, select, input):focus-visible { outline: 3px solid #2563eb; outline-offset: 3px; }
+.skip-link { position: fixed; top: 8px; left: 8px; z-index: 100; padding: 10px 16px; background: white; color: var(--text-color); border: 1px solid var(--primary); border-radius: 6px; transform: translateY(-160%); }
+.skip-link:focus { transform: translateY(0); }
+#main-content { scroll-margin-top: 16px; }
+@media (max-width: 768px) {
+    .app-container { padding: 12px; gap: 20px; }
+    .sidebar { padding: 14px; gap: 12px; }
+    .brand { border-bottom: 0; padding: 0; }
+    .brand h2 { font-size: 1.1rem; margin-bottom: 2px; }
+    .cohort-control { grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 8px 12px; }
+    .cohort-control label { font-size: 0.8rem; font-weight: 500; }
+    .cohort-control p { grid-column: 1 / -1; }
+    .cohort-control select { padding: 7px 10px; min-width: 0; }
+    .nav-menu { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+    .nav-btn { justify-content: center; gap: 5px; padding: 8px 4px; font-size: 0.8rem; font-weight: 500; }
+    .nav-icon { width: 16px; height: 16px; }
+    #view-student .section-header h1 { flex-wrap: wrap; gap: 8px !important; }
+    .filters { gap: 10px; }
+    .filter-group { min-width: 0; }
+}
+@media (max-width: 380px) {
+    .nav-btn { font-size: 0.75rem; }
+    .nav-icon { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }
