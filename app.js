@@ -1176,10 +1176,9 @@ function renderCumulativeView() {
     const exams = ['一模', '二模', '三模', '四模', '會考'];
 
     // Calculate data for Pie Charts
-    const fiveAStats = [];
+    const examStats = [];
     const chartData = exams.map(exam => {
         let over30 = 0, between25and29 = 0, between20and25 = 0, between15and20 = 0, under15 = 0;
-        let fiveACount = 0;
         let validCount = 0;
 
         allStudents.forEach(s => {
@@ -1193,32 +1192,19 @@ function renderCumulativeView() {
                     else if (score > 15) between15and20++;
                     else under15++;
 
-                    // 5A 判定 (國、英、數、社、自皆達 A 以上)
-                    const examData = s[exam];
-                    if (examData.國 && examData.英 && examData.數 && examData.社 && examData.自) {
-                        const is5A = ['國', '英', '數', '社', '自'].every(sub => examData[sub] && examData[sub].includes('A'));
-                        if (is5A) {
-                            fiveACount++;
-                        }
-                    }
                 }
             }
         });
 
-        const percent = validCount > 0 ? ((fiveACount / validCount) * 100).toFixed(1) : '0.0';
-        fiveAStats.push({
-            count: fiveACount,
-            percentage: percent,
-            validCount
-        });
+        examStats.push({validCount});
 
         return [over30, between25and29, between20and25, between15and20, under15];
     });
 
-    renderCumulativeCharts(chartData, fiveAStats);
+    renderCumulativeCharts(chartData, examStats);
 }
 
-function renderCumulativeCharts(chartData, fiveAStats) {
+function renderCumulativeCharts(chartData, examStats) {
     const labels = ['30分以上', '25至未滿30分', '20至未滿25分', '超過15至未滿20分', '15分以下'];
     const colorsArr = [
         colors.primary,     // Blue for >=30
@@ -1237,17 +1223,13 @@ function renderCumulativeCharts(chartData, fiveAStats) {
             state.charts[`pie${exam}`].destroy();
         }
 
-        const stats = fiveAStats[index];
+        const stats = examStats[index];
 
         const card = canvas.closest('.chart-wrapper');
         const values = createScoreDistributionTable(labels, colorsArr, chartData[index], chartData[index].map(count => stats.validCount ? count / stats.validCount * 100 : 0));
         const oldValues = card.querySelector('.compare-pie-values');
         if (oldValues) oldValues.replaceWith(values); else card.append(values);
         values.hidden = !stats.validCount;
-        let fiveA = card.querySelector('.five-a-summary');
-        if (!fiveA) { fiveA = document.createElement('p'); fiveA.className = 'five-a-summary'; card.append(fiveA); }
-        fiveA.hidden = !stats.validCount;
-        fiveA.innerHTML = `<span>5A</span><span>${stats.count}人</span><span>${stats.percentage}%</span>`;
         let notice = card.querySelector('.exam-empty');
         if (!notice) {
             notice = document.createElement('p');

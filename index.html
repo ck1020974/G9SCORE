@@ -11,7 +11,7 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&display=swap"
         rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=19">
+    <link rel="stylesheet" href="style.css?v=21">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
@@ -158,10 +158,9 @@
                 </div>
 
                 <div class="student-dashboard active-state hidden" id="student-dashboard-active">
-                    <div class="grades-breakdown glass-panel mb-4" style="margin-bottom: 1.5rem;">
-                        <h3>各次模考</h3>
+                    <div class="grades-breakdown glass-panel student-score-panel">
                         <div class="table-container">
-                            <table class="grades-table">
+                            <table class="grades-table" aria-label="各次考試成績">
                                 <thead>
                                     <tr>
                                         <th>考試</th>
@@ -183,13 +182,11 @@
 
                     <div class="charts-grid">
                         <div class="chart-wrapper glass-panel">
-                            <h3>總分趨勢圖</h3>
                             <div class="canvas-container" style="height: 250px;">
                                 <canvas id="progressChart" role="img" aria-label="個人總分趨勢"></canvas>
                             </div>
                         </div>
                         <div class="chart-wrapper glass-panel">
-                            <h3>近期雷達圖</h3>
                             <div class="canvas-container" style="height: 250px;">
                                 <canvas id="radarChart" role="img" aria-label="個人近期各科能力"></canvas>
                             </div>
@@ -385,7 +382,7 @@
     <script src="data-model.js?v=2"></script>
     <script src="cohorts.js?v=6"></script>
     <script src="comparison-overview.js?v=20"></script>
-    <script src="app.js?v=24"></script>
+    <script src="app.js?v=25"></script>
 </body>
 
 </html>

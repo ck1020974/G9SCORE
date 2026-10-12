@@ -555,9 +555,7 @@ select option {
 .compare-pie-values .distribution-count { font-weight: 600; }
 .compare-pie-values th span { display: inline-flex; align-items: center; gap: 6px; }
 .compare-pie-values i { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-.five-a-summary { display: flex; align-items: center; gap: 18px; border-top: 1px solid var(--border-color, #e2e8f0); padding-top: 12px; margin-top: 12px; font-size: 0.85rem; color: var(--text-muted); font-variant-numeric: tabular-nums; }
 #view-cumulative .chart-wrapper { padding: 20px !important; }
-.five-a-summary[hidden] { display: none; }
 .compare-source-table summary { cursor: pointer; color: var(--primary); margin-bottom: 12px; }
 .compare-pie-heading { margin-top: 24px; color: var(--primary); }
 @media (max-width: 560px) { .compare-pie-grid { grid-template-columns: 1fr; } }
@@ -568,6 +566,20 @@ select option {
 }
 
 /* School report design: clear hierarchy, compact navigation, readable data. */
+#student-dashboard-active .student-score-panel { margin-bottom: 16px; }
+#student-dashboard-active .grades-table th, #student-dashboard-active .grades-table td { white-space: nowrap; }
+#student-dashboard-active .charts-grid { gap: 16px; }
+@media (max-width: 768px) {
+    #view-student .filters { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 12px; }
+    #view-student .filter-group { display: grid; gap: 4px; }
+    #view-student .filter-group label { font-size: 0.8rem; }
+    #view-student .filter-group select, #view-student .filter-group input { width: 100%; min-width: 0; padding: 8px 10px; }
+    #student-dashboard-active .student-score-panel { padding: 12px; }
+    #student-dashboard-active .grades-table th, #student-dashboard-active .grades-table td { padding: 9px 4px; font-size: 0.85rem; }
+    #student-dashboard-active .chart-wrapper { padding: 12px; }
+    #student-dashboard-active .canvas-container { height: 220px !important; }
+}
+
 html { color-scheme: light; }
 .nav-icon { width: 20px; height: 20px; flex-shrink: 0; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 .brand { padding: 0 0 16px; border-bottom: 1px solid var(--glass-border); }
