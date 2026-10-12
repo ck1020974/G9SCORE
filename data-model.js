@@ -47,6 +47,9 @@
         const values = students.map(s => score(s[exam]?.總積分)).filter(v => v !== null);
         return { count: values.length, average: values.length ? values.reduce((a, b) => a + b, 0) / values.length : null };
     }
+    function latestExam(data) {
+        return [...exams].reverse().find(exam => data.exams.includes(exam) && summary(data.students, exam).count > 0) || '';
+    }
     function essayGradeFromPoints(value) {
         const points = score(value);
         if (points === null) return null;
@@ -54,7 +57,7 @@
         if (!Object.prototype.hasOwnProperty.call(mapping,points)) throw new Error('作文積分無法換算');
         return mapping[points];
     }
-    const api = { exams, score, validate, summary, essayGradeFromPoints };
+    const api = { exams, score, validate, summary, latestExam, essayGradeFromPoints };
     if (typeof module !== 'undefined' && module.exports) module.exports = api;
     else root.ScoreData = api;
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -32,12 +32,13 @@ async function switchCohort(id) {
         state.allData = data.students;
         state.classes = [...new Set(data.students.map(s => s.班級))].sort();
         state.availableExams = data.exams.filter(exam => data.students.some(s => s[exam] && Object.keys(s[exam]).length));
-        state.filters = { className: 'all', studentSeat: null, group: 'all', rankingExam: '', rankingGroup: 'all', rankingClass: 'all' };
+        state.filters = { className: 'all', studentSeat: null, group: 'all', rankingExam: ScoreData.latestExam(data), rankingGroup: 'all', rankingClass: 'all' };
         const groups = [...new Set(data.students.flatMap(getStudentGroups))].sort();
         [elements.studentGroupSelect, elements.subjectGroupSelect, elements.cumulativeGroupSelect, elements.rankingGroupSelect].forEach(control => {
             control.replaceChildren(new Option('全校', 'all'), ...groups.map(g => new Option(g, g)));
         });
         elements.rankingExamSelect.replaceChildren(new Option('請選擇考試項目…', ''), ...state.availableExams.map(e => new Option(e, e)));
+        elements.rankingExamSelect.value = state.filters.rankingExam;
         populateClassSelect();
         populateRankingClassSelect();
         populateStudentSelect('all');

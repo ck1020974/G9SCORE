@@ -1,6 +1,13 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const model = require('../data-model.js');
+test('排名預設最近有效考試，跳過只有科目或空總分的後續考試並保留零分', () => {
+    assert.equal(model.latestExam(require('../data/114.json')), '會考');
+    assert.equal(model.latestExam(require('../data/115.json')), '一模');
+    assert.equal(model.latestExam({exams:['一模','二模','三模'],students:[{一模:{總積分:20},二模:{總積分:0},三模:{國:'A',總積分:''}}]}), '二模');
+    assert.equal(model.latestExam({exams:['會考','一模'],students:[{一模:{總積分:20},會考:{總積分:25}}]}), '會考');
+    assert.equal(model.latestExam({exams:[],students:[]}), '');
+});
 test('114級遷移保留原始成績与121筆紀錄', () => {
     const before = require('../scores.json');
     const after = model.validate(require('../data/114.json'),'114');

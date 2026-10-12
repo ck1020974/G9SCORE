@@ -42,6 +42,8 @@ node tools/import-cohort.cjs 115 待匯入.json
 
 ## 驗證
 
+總體排名首次載入或切換級別時，預設最近一次具有有效總積分的考試、全校及所有班級；使用者仍可自行調整篩選。
+
 ```powershell
 node --test tools/data-model.test.cjs tools/history-pies.test.cjs
 ```
